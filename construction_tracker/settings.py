@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     "crispy_forms",
     "crispy_bootstrap5",
     "django_extensions",
+    "widget_tweaks",
     
     # Local apps
     "core",
@@ -54,6 +55,7 @@ INSTALLED_APPS = [
     "expenses",
     "contractors",
     "dashboard",
+    "billing",
 ]
 
 MIDDLEWARE = [
@@ -64,6 +66,7 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
+    "core.middleware.SuperOwnerRedirectMiddleware",  # Must be before MultiTenantMiddleware
     "core.middleware.MultiTenantMiddleware",
     "core.middleware.PermissionMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Activation Request Detail - Super Owner</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .section { margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .section h3 { margin-top: 0; color: #333; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .form-group input, .form-group textarea { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 3px; }
+        .button { padding: 10px 15px; margin: 5px; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        .button.approve { background-color: #28a745; }
+        .button.reject { background-color: #dc3545; }
+        .button.back { background-color: #007cba; }
+        .button:hover { opacity: 0.8; }
+        .status { padding: 5px 10px; border-radius: 3px; color: white; }
+        .status.pending { background-color: #ffc107; color: #000; }
+        .status.approved { background-color: #28a745; }
+        .status.rejected { background-color: #dc3545; }
+    </style>
+</head>
+<body>
+    <h1>Activation Request Detail</h1>
+    
+    {% if messages %}
+        {% for message in messages %}
+            <div class="section {{ message.tags }}" style="color: {% if message.tags == 'error' %}red{% else %}green{% endif %};">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+    
+    <div class="section">
+        <h3>Request Information</h3>
+        <p><strong>Type:</strong> {{ activation_request.get_request_type_display }}</p>
+        <p><strong>Status:</strong> <span class="status {{ activation_request.status }}">{{ activation_request.get_status_display }}</span></p>
+        <p><strong>Email:</strong> {{ activation_request.email }}</p>
+        <p><strong>Name:</strong> {{ activation_request.first_name }} {{ activation_request.last_name }}</p>
+        <p><strong>Phone:</strong> {{ activation_request.phone|default:"Not provided" }}</p>
+        {% if activation_request.company_name %}
+            <p><strong>Company:</strong> {{ activation_request.company_name }}</p>
+        {% endif %}
+        <p><strong>Created:</strong> {{ activation_request.created_at }}</p>
+        <p><strong>Expires:</strong> {{ activation_request.expires_at }}</p>
+    </div>
+    
+    {% if activation_request.company_description %}
+    <div class="section">
+        <h3>Company Information</h3>
+        <p><strong>Description:</strong> {{ activation_request.company_description }}</p>
+        {% if activation_request.company_website %}
+            <p><strong>Website:</strong> <a href="{{ activation_request.company_website }}" target="_blank">{{ activation_request.company_website }}</a></p>
+        {% endif %}
+        {% if activation_request.company_address %}
+            <p><strong>Address:</strong> {{ activation_request.company_address }}</p>
+        {% endif %}
+    </div>
+    {% endif %}
+    
+    {% if activation_request.status == 'pending' %}
+    <div class="section">
+        <h3>Actions</h3>
+        <form method="post" style="display: inline;">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="approve">
+            <button type="submit" class="button approve">Approve Request</button>
+        </form>
+        
+        <form method="post" style="display: inline; margin-left: 10px;">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="reject">
+            <div class="form-group" style="display: inline-block; margin: 0 10px;">
+                <label for="rejection_reason">Rejection Reason (optional):</label>
+                <input type="text" name="rejection_reason" placeholder="Enter reason for rejection">
+            </div>
+            <button type="submit" class="button reject">Reject Request</button>
+        </form>
+    </div>
+    {% endif %}
+    
+    <div class="section">
+        <a href="/super-owner/registration-requests/" class="button back">← Back to Requests List</a>
+        <a href="/super-owner/" class="button back">← Back to Dashboard</a>
+    </div>
+</body>
+</html>

@@ -1,313 +1,411 @@
 # Construction Expense Tracker
 
-A comprehensive Django-based web application for managing multiple construction projects and tracking expenses effectively. This production-ready application provides an intuitive dashboard, project management tools, and visual performance summaries.
+A comprehensive web application for managing construction projects, tracking expenses, and handling contractor relationships with multi-tenant support and sophisticated user management.
 
-## Features
+## 📋 Table of Contents
 
-### 🏗️ **Project Management**
-- Create and manage multiple construction projects
-- Track project status, timelines, and budgets
-- Monitor progress with visual indicators
-- Client information management
-- Project-contractor assignments
+- [Overview](#overview)
+- [System Architecture](#system-architecture)
+- [User Types & Workflows](#user-types--workflows)
+- [Features](#features)
+- [Installation](#installation)
+- [Usage Guide](#usage-guide)
+- [API Documentation](#api-documentation)
+- [Development](#development)
+- [Troubleshooting](#troubleshooting)
 
-### 💰 **Expense Tracking**
-- Track planned vs actual costs
-- Categorize expenses by type
-- Receipt and document management
-- Contractor expense assignments
-- Tax information tracking
-- Recurring expense templates
+## 🏗️ Overview
 
-### 👷 **Contractor Management**
-- Maintain contractor database
-- Track contractor ratings and performance
-- Manage contractor types and specializations
-- Hourly rate and licensing information
+The Construction Expense Tracker is a Django-based web application designed to streamline construction project management for companies and individual contractors. It features a sophisticated multi-tenant architecture, role-based access control, and comprehensive expense tracking capabilities.
 
-### 📊 **Dashboard & Analytics**
-- Interactive KPI dashboard
-- Visual charts and graphs
-- Monthly expense trends
-- Project status overview
-- Budget variance tracking
-- Quarterly summaries
+### Key Benefits
+- **Multi-tenant Architecture**: Support for multiple companies and individual users
+- **Role-based Access Control**: Granular permissions system for different user roles
+- **Expense Tracking**: Detailed project expense management with budget monitoring
+- **Contractor Management**: Comprehensive contractor database and relationship tracking
+- **Super Owner System**: Centralized administration for system-wide management
+- **Billing Integration**: Built-in subscription and payment processing
 
-### 🚀 **Production Ready**
-- Docker containerization
-- PostgreSQL database support
-- Redis for caching and tasks
-- Gunicorn WSGI server
-- WhiteNoise for static files
-- Comprehensive admin interface
+## 🏛️ System Architecture
 
-## Quick Start
-
-### Option 1: Local Development
-
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd construction_expense_tracker
-   ```
-
-2. **Create virtual environment**
-   ```bash
-   python3 -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
-
-3. **Install dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. **Configure environment**
-   ```bash
-   cp .env.example .env
-   # Edit .env with your settings
-   ```
-
-5. **Run migrations**
-   ```bash
-   python manage.py migrate
-   ```
-
-6. **Create superuser**
-   ```bash
-   python manage.py createsuperuser
-   ```
-
-7. **Start development server**
-   ```bash
-   python manage.py runserver
-   ```
-
-8. **Visit the application**
-   - Application: http://127.0.0.1:8000/
-   - Admin: http://127.0.0.1:8000/admin/
-
-### Option 2: Docker Development
-
-1. **Clone and start with Docker**
-   ```bash
-   git clone <repository-url>
-   cd construction_expense_tracker
-   docker-compose up --build
-   ```
-
-2. **Run migrations in container**
-   ```bash
-   docker-compose exec web python manage.py migrate
-   ```
-
-3. **Create superuser**
-   ```bash
-   docker-compose exec web python manage.py createsuperuser
-   ```
-
-4. **Visit the application**
-   - Application: http://localhost:8000/
-   - Admin: http://localhost:8000/admin/
-
-## Production Deployment
-
-### Docker Production Setup
-
-1. **Create production environment file**
-   ```bash
-   cp .env .env.production
-   # Configure production settings in .env.production
-   ```
-
-2. **Build and deploy**
-   ```bash
-   docker-compose -f docker-compose.prod.yml up --build -d
-   ```
-
-### Manual Production Setup
-
-1. **Install dependencies**
-   ```bash
-   pip install -r requirements.txt
-   pip install gunicorn whitenoise
-   ```
-
-2. **Configure environment**
-   ```bash
-   export DEBUG=False
-   export DATABASE_URL=postgres://user:password@host:port/database
-   export SECRET_KEY=your-secret-key
-   ```
-
-3. **Run migrations and collect static**
-   ```bash
-   python manage.py migrate
-   python manage.py collectstatic --noinput
-   ```
-
-4. **Start with Gunicorn**
-   ```bash
-   gunicorn --bind 0.0.0.0:8000 construction_tracker.wsgi:application
-   ```
-
-## Configuration
-
-### Environment Variables
-
-Create a `.env` file with the following variables:
-
-```bash
-# Basic settings
-SECRET_KEY=your-secret-key-here
-DEBUG=True
-ALLOWED_HOSTS=localhost,127.0.0.1,your-domain.com
-
-# Database
-DATABASE_URL=sqlite:///db.sqlite3
-# For PostgreSQL: postgres://username:password@host:port/database_name
-
-# Email settings
-EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend
-EMAIL_HOST=smtp.gmail.com
-EMAIL_PORT=587
-EMAIL_USE_TLS=True
-EMAIL_HOST_USER=your-email@gmail.com
-EMAIL_HOST_PASSWORD=your-app-password
-
-# Static and media files
-STATIC_ROOT=staticfiles
-MEDIA_ROOT=media
-
-# CORS settings
-CORS_ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    CONSTRUCTION TRACKER                         │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐            │
+│  │ SUPER OWNER │  │  COMPANIES  │  │ INDIVIDUALS │            │
+│  │   PORTAL    │  │   PORTAL    │  │   PORTAL    │            │
+│  └─────────────┘  └─────────────┘  └─────────────┘            │
+│          │              │                  │                   │
+│          └──────────────┼──────────────────┘                   │
+│                         │                                      │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │                 CORE SYSTEM                             │   │
+│  │  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐       │   │
+│  │  │   USERS &   │ │ PROJECTS &  │ │ BILLING &   │       │   │
+│  │  │ PERMISSIONS │ │  EXPENSES   │ │ PAYMENTS    │       │   │
+│  │  └─────────────┘ └─────────────┘ └─────────────┘       │   │
+│  │                                                         │   │
+│  │  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐       │   │
+│  │  │CONTRACTORS &│ │NOTIFICATIONS│ │  REPORTS &  │       │   │
+│  │  │RELATIONSHIPS│ │ & MESSAGES  │ │ ANALYTICS   │       │   │
+│  │  └─────────────┘ └─────────────┘ └─────────────┘       │   │
+│  └─────────────────────────────────────────────────────────┘   │
+│                                                                 │
+├─────────────────────────────────────────────────────────────────┤
+│                     DATABASE LAYER                              │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │ PostgreSQL/SQLite - Multi-tenant Data Storage          │   │
+│  └─────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-## Database Models
+## 👥 User Types & Workflows
 
-### Core Models
-- **UserProfile**: Extended user information
-- **TimeStampedModel**: Abstract base with timestamps
-
-### Project Models
-- **Project**: Main project information
-- **ProjectContractor**: Project-contractor relationships
-
-### Expense Models
-- **ExpenseCategory**: Expense categorization
-- **Expense**: Individual expense records
-- **ExpenseAttachment**: File attachments
-- **RecurringExpense**: Recurring expense templates
-
-### Contractor Models
-- **Contractor**: Contractor information and ratings
-
-## API Endpoints
-
-The application includes REST API endpoints for integration:
-
-- **Projects**: `/api/projects/`
-- **Expenses**: `/api/expenses/`
-- **Contractors**: `/api/contractors/`
-- **Categories**: `/api/categories/`
-
-## Admin Interface
-
-Access the comprehensive admin interface at `/admin/` to:
-
-- Manage users and permissions
-- Create and edit projects
-- Track expenses and categories
-- Manage contractor information
-- View calculated fields and statistics
-
-## Testing
-
-Run the test suite:
-
-```bash
-python manage.py test
+### 1. **Super Owner** (System Administrator)
+```
+Super Owner Login
+       ↓
+Super Owner Dashboard
+       ↓
+┌─────────────────┬─────────────────┬─────────────────┐
+│ User Management │Registration Mgmt│System Analytics │
+│                 │                 │                 │
+│ • View all users│ • Approve/Reject│ • System stats  │
+│ • Manage access │   registrations │ • User activity │
+│ • Assign roles  │ • Review docs   │ • Company health│
+│ • Bulk actions  │ • Send notices  │ • Export data   │
+└─────────────────┴─────────────────┴─────────────────┘
 ```
 
-With coverage:
+**Super Owner Capabilities:**
+- ✅ System-wide user management
+- ✅ Registration request approval/rejection
+- ✅ Company oversight and analytics
+- ✅ Billing and subscription management
+- ✅ System configuration and maintenance
+- ✅ Export system data
 
-```bash
-coverage run --source='.' manage.py test
-coverage report
-coverage html  # Generate HTML report
+### 2. **Company Users** (Business Teams)
+```
+Company User Login
+       ↓
+Company Dashboard
+       ↓
+┌─────────────────┬─────────────────┬─────────────────┐
+│  PROJECT MGMT   │  EXPENSE TRACK  │ CONTRACTOR MGMT │
+│                 │                 │                 │
+│ • Create projects│ • Log expenses  │ • Add contractors│
+│ • Set budgets   │ • Track costs   │ • Manage rates  │
+│ • Monitor status│ • Approve bills │ • Performance   │
+│ • Reports       │ • Budget alerts │ • Relationships │
+└─────────────────┴─────────────────┴─────────────────┘
+                           ↓
+                    Role-Based Access
+┌─────────────────┬─────────────────┬─────────────────┐
+│     ADMIN       │   SUPERVISOR    │  TEAM MEMBER    │
+│                 │                 │                 │
+│ • Full access   │ • View/approve  │ • Limited access│
+│ • User management│ • Reports      │ • Own tasks only│
+│ • System config │ • Oversight     │ • Submit expenses│
+│ • All permissions│ • Team leads   │ • View projects │
+└─────────────────┴─────────────────┴─────────────────┘
 ```
 
-## Development
+**Company User Roles:**
+- **Company Admin**: Full system access, user management, all permissions
+- **Supervisor/Manager**: Project oversight, expense approval, team management  
+- **Team Member**: Basic access, expense submission, project viewing
 
-### Adding New Features
+### 3. **Individual Users** (Freelance Contractors)
+```
+Individual User Login
+       ↓
+Individual Dashboard
+       ↓
+┌─────────────────┬─────────────────┬─────────────────┐
+│ PROFILE MGMT    │ BILLING ACCESS  │ SIMPLE TRACKING │
+│                 │                 │                 │
+│ • Personal info │ • View invoices │ • Basic projects│
+│ • Skills/rates  │ • Payment hist. │ • Time tracking │
+│ • Availability  │ • Subscription  │ • Simple reports│
+│ • Portfolio     │ • Billing prefs │ • Contact info  │
+└─────────────────┴─────────────────┴─────────────────┘
+```
 
-1. Create feature branch
-2. Add models to appropriate app
-3. Create and run migrations
-4. Add views and templates
-5. Update URLs
-6. Add tests
-7. Update documentation
+**Individual User Features:**
+- ✅ Personal profile management
+- ✅ Basic project tracking
+- ✅ Billing and payment access
+- ✅ Subscription management
+- ✅ Simple reporting tools
 
-### Database Migrations
+## ✨ Features
+
+### Core Functionality
+- **Multi-tenant Architecture**: Separate data spaces for companies and individuals
+- **Role-based Access Control**: Granular permissions system
+- **Project Management**: Comprehensive project tracking with budgets and timelines
+- **Expense Management**: Detailed expense tracking with approval workflows
+- **Contractor Database**: Complete contractor management system
+- **Billing Integration**: Subscription-based billing with multiple payment options
+
+### Security Features
+- **Authentication**: Multi-factor authentication support
+- **Authorization**: Role-based permission system
+- **Data Isolation**: Tenant-specific data segregation
+- **Audit Logs**: Comprehensive activity logging
+- **Document Security**: Secure file upload and management
+
+### Administrative Tools
+- **Super Owner Dashboard**: System-wide administration interface
+- **Registration Management**: Approval workflow for new users
+- **Analytics & Reporting**: Comprehensive system analytics
+- **Billing Management**: Subscription and payment oversight
+- **System Monitoring**: Performance and health monitoring
+
+## 🚀 Installation
+
+### Prerequisites
+- Python 3.8+
+- Node.js 14+ (for frontend assets)
+- PostgreSQL 12+ (recommended) or SQLite (development)
+- Redis (for caching and sessions)
+
+### Quick Start
+
+1. **Clone the Repository**
+```bash
+git clone <repository-url>
+cd construction_expense_tracker
+```
+
+2. **Create Virtual Environment**
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
+
+3. **Install Dependencies**
+```bash
+pip install -r requirements.txt
+```
+
+4. **Environment Setup**
+```bash
+cp .env.example .env
+# Edit .env with your database and configuration settings
+```
+
+5. **Database Setup**
+```bash
+python manage.py migrate
+python manage.py collectstatic --noinput
+```
+
+6. **Create Super Owner**
+```bash
+python manage.py create_super_owner --username admin --email admin@example.com
+```
+
+7. **Run Development Server**
+```bash
+python manage.py runserver
+```
+
+8. **Access the Application**
+- Application: http://localhost:8000
+- Super Owner Dashboard: http://localhost:8000/super-owner/
+- Admin Interface: http://localhost:8000/admin/
+
+## 📖 Usage Guide
+
+### For Super Owners
+
+1. **Initial Setup**
+   - Log in to super owner dashboard
+   - Review system settings
+   - Configure notification templates
+   - Set up billing plans
+
+2. **User Management**
+   - Monitor registration requests
+   - Approve/reject new companies and individuals
+   - Manage system-wide user access
+   - Review user activity and analytics
+
+3. **System Administration**
+   - Configure system settings
+   - Manage billing and subscriptions
+   - Generate system reports
+   - Monitor system health
+
+### For Company Administrators
+
+1. **Company Setup**
+   - Complete company profile
+   - Set up user roles and permissions
+   - Configure notification preferences
+   - Set up billing information
+
+2. **User Management**
+   - Invite team members
+   - Assign roles and permissions
+   - Manage company memberships
+   - Monitor user activity
+
+3. **Project Management**
+   - Create and manage projects
+   - Set budgets and timelines
+   - Track project progress
+   - Generate project reports
+
+### For Team Members
+
+1. **Daily Operations**
+   - Log project expenses
+   - Update project status
+   - Submit expense reports
+   - View assigned projects
+
+2. **Expense Management**
+   - Submit expenses for approval
+   - Upload receipts and documentation
+   - Track expense status
+   - View expense history
+
+### For Individual Users
+
+1. **Profile Management**
+   - Complete personal profile
+   - Update skills and availability
+   - Set hourly rates
+   - Upload portfolio items
+
+2. **Simple Tracking**
+   - Track basic project information
+   - Log work hours
+   - Generate simple reports
+   - Manage billing information
+
+## 🔧 Development
+
+### Project Structure
+```
+construction_expense_tracker/
+├── core/                 # Core application (users, auth, admin)
+├── dashboard/           # Main dashboard views
+├── projects/           # Project management
+├── expenses/           # Expense tracking
+├── contractors/        # Contractor management  
+├── billing/           # Billing and payments
+├── templates/         # HTML templates
+├── static/           # CSS, JS, images
+├── media/           # User uploaded files
+└── requirements.txt  # Python dependencies
+```
+
+### Key Models
+
+- **User Management**: User, UserProfile, SuperOwner
+- **Company System**: Company, CompanyMembership, Role, Permission
+- **Project Tracking**: Project, ProjectMember
+- **Expense Management**: Expense, ExpenseCategory, ExpenseApproval
+- **Contractor System**: Contractor, ContractorRating
+- **Billing System**: SubscriptionPlan, UserSubscription, Payment
+
+### Development Commands
 
 ```bash
 # Create migrations
 python manage.py makemigrations
 
-# Apply migrations
+# Apply migrations  
 python manage.py migrate
 
-# View migration status
-python manage.py showmigrations
+# Create superuser
+python manage.py createsuperuser
+
+# Collect static files
+python manage.py collectstatic
+
+# Run tests
+python manage.py test
+
+# Debug user issues
+python manage.py debug_user_login --username <username>
+
+# Clear sessions
+python manage.py clear_sessions --all
 ```
 
-## Troubleshooting
+## 🔍 Troubleshooting
 
 ### Common Issues
 
-1. **Database connection errors**
-   - Check DATABASE_URL in .env
-   - Ensure PostgreSQL is running (if using)
+1. **Super Owner Redirect Loops**
+   ```bash
+   python manage.py clear_sessions --all
+   # Then clear browser cache and cookies
+   ```
 
-2. **Static files not loading**
-   - Run `python manage.py collectstatic`
-   - Check STATIC_ROOT setting
+2. **404 Errors in Admin**
+   - Check URL patterns in admin.py
+   - Verify model registration
+   - Clear browser cache
 
-3. **Permission denied errors**
-   - Check file permissions
-   - Ensure media directory is writable
+3. **Permission Denied Errors**
+   - Verify user roles and permissions
+   - Check middleware configuration
+   - Review access control settings
 
-4. **Docker build issues**
-   - Clear Docker cache: `docker system prune`
-   - Rebuild: `docker-compose up --build`
+4. **Database Issues**
+   ```bash
+   python manage.py migrate --fake-initial
+   python manage.py migrate
+   ```
 
-## Contributing
+5. **Static Files Not Loading**
+   ```bash
+   python manage.py collectstatic --clear
+   python manage.py collectstatic
+   ```
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests
-5. Submit a pull request
+### Debug Tools
 
-## License
+- **Session Debug**: `/super-owner/debug/session/` - Check login and session status
+- **Permission Debug**: Use management commands to verify user permissions
+- **Log Analysis**: Check Django logs for detailed error information
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+### Support
 
-## Support
+For technical support or questions:
+1. Check the troubleshooting section above
+2. Review Django logs for error details
+3. Use the built-in debug tools
+4. Create an issue in the project repository
 
-For support and questions:
+## 📊 System Health Monitoring
 
-- Create an issue on GitHub
-- Check the documentation
-- Review the admin interface for data management
+The application includes built-in monitoring for:
+- User activity and engagement
+- System performance metrics  
+- Database health and optimization
+- Error tracking and reporting
+- Billing and subscription status
 
-## Technology Stack
+## 🔒 Security Considerations
 
-- **Backend**: Django 5.2, Django REST Framework
-- **Database**: PostgreSQL (production), SQLite (development)
-- **Frontend**: Bootstrap 5, Chart.js
-- **Caching**: Redis
-- **Task Queue**: Celery
-- **Deployment**: Docker, Gunicorn
-- **Static Files**: WhiteNoise
+- Regular security updates and patches
+- Secure file upload handling
+- SQL injection prevention
+- XSS protection
+- CSRF protection
+- Secure session management
+- Role-based access control
+- Data encryption at rest and in transit
+
+---
+
+**Construction Expense Tracker** - Built with Django, designed for scalability and ease of use.

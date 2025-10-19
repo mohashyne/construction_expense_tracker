@@ -27,6 +27,12 @@ from .forms import (
 def login_view(request):
     """Enhanced user login view with email/username support"""
     if request.user.is_authenticated:
+        # Check if user is a super owner - redirect to super owner dashboard
+        try:
+            if hasattr(request.user, 'userprofile') and request.user.userprofile.is_super_owner():
+                return redirect('/super-owner/')
+        except:
+            pass
         return redirect('dashboard:dashboard')
     
     if request.method == 'POST':
@@ -61,6 +67,10 @@ def login_view(request):
                     messages.success(request, f'Welcome to {membership.company.name}!')
                 except CompanyMembership.DoesNotExist:
                     pass
+            
+            # Super owners get redirected to their dashboard
+            if is_super_owner:
+                return redirect('/super-owner/')
             
             return redirect(request.GET.get('next', 'dashboard:dashboard'))
     else:
@@ -875,7 +885,7 @@ def activation_request_detail(request, request_id):
             activation_request.mark_under_review(request.user)
             messages.success(request, f'Request marked as under review.')
         
-        return redirect('core:activation_request_detail', request_id=request_id)
+        return redirect('super_owner:activation_request_detail', request_id=request_id)
     
     context = {
         'activation_request': activation_request,
@@ -903,7 +913,7 @@ def document_review(request, document_id):
             document.require_revision(request.user, notes)
             messages.success(request, f'Revision requested for {document.get_document_type_display()}.')
         
-        return redirect('core:activation_request_detail', request_id=document.activation_request.id)
+        return redirect('super_owner:activation_request_detail', request_id=document.activation_request.id)
     
     context = {
         'document': document,
@@ -926,6 +936,16 @@ def serve_document(request, document_id):
         return response
     except FileNotFoundError:
         raise Http404("Document file not found")
+
+# Redirect Views for Legacy URLs
+
+def redirect_to_super_owner_requests(request):
+    """Redirect legacy admin requests URL to Super Owner dashboard"""
+    return redirect('/super-owner/registration-requests/')
+
+def redirect_to_super_owner_request_detail(request, request_id):
+    """Redirect legacy admin request detail URL to Super Owner dashboard"""
+    return redirect(f'/super-owner/registration-requests/{request_id}/')
 
 # Helper Functions
 

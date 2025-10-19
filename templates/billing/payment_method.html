@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Payment Method - Construction Expense Tracker{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4><i class="fas fa-credit-card"></i> Payment Method</h4>
+                    <p class="mb-0 text-muted">Select your preferred payment method for {{ plan.name }}</p>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h5>Plan Details:</h5>
+                            <ul class="list-unstyled">
+                                <li><strong>Plan:</strong> {{ plan.name }}</li>
+                                <li><strong>Price:</strong> ${{ plan.price }} per {{ plan.billing_period }}</li>
+                                <li><strong>Features:</strong> {{ plan.features }}</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Payment Method Selection</strong><br>
+                        Payment integration is currently being implemented. Please contact support for subscription setup.
+                    </div>
+                    
+                    <div class="text-center">
+                        <a href="{% url 'billing:choose_plan' %}" class="btn btn-secondary me-2">
+                            <i class="fas fa-arrow-left"></i> Back to Plans
+                        </a>
+                        <a href="mailto:billing@constructiontracker.com?subject=Subscription%20Setup%20-%20{{ plan.name }}" class="btn btn-primary">
+                            <i class="fas fa-envelope"></i> Contact Billing
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

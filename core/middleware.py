@@ -3,6 +3,53 @@ from django.contrib import messages
 from django.urls import reverse
 from django.utils.deprecation import MiddlewareMixin
 from .models import CompanyMembership, UserProfile
+import logging
+
+logger = logging.getLogger(__name__)
+
+class SuperOwnerRedirectMiddleware(MiddlewareMixin):
+    """
+    Middleware to ensure super owners are always redirected to their dashboard
+    This runs before MultiTenantMiddleware to prevent conflicts
+    """
+    
+    def process_request(self, request):
+        # Skip for anonymous users and super owner URLs
+        if not request.user.is_authenticated:
+            return None
+            
+        # Skip if already accessing super owner URLs
+        if request.path.startswith('/super-owner/'):
+            return None
+            
+        # Skip for static files, admin, auth, etc.
+        exempt_urls = [
+            '/admin/', '/auth/', '/static/', '/media/',
+            '/login/', '/logout/', '/register/',
+            '/profile/',  # Allow profile access
+        ]
+        
+        if any(request.path.startswith(url) for url in exempt_urls):
+            return None
+        
+        # Check if user is a super owner
+        try:
+            if hasattr(request.user, 'userprofile') and request.user.userprofile.is_super_owner():
+                # Only redirect if they're accessing root or specific regular user areas
+                # BUT NOT if they're accessing admin pages or already in super-owner area
+                redirect_paths = ['/', '/dashboard/']
+                
+                # Also redirect company/billing/project areas if not accessing admin
+                if not request.path.startswith('/admin/'):
+                    redirect_paths.extend(['/company/', '/billing/', '/projects/', '/expenses/', '/contractors/'])
+                
+                if any(request.path.startswith(path) for path in redirect_paths):
+                    logger.debug(f'Redirecting super owner {request.user.username} from {request.path} to /super-owner/')
+                    return redirect('/super-owner/')
+        except Exception as e:
+            logger.warning(f'Super owner redirect check failed for user {request.user.username}: {e}')
+        
+        return None
 
 class MultiTenantMiddleware(MiddlewareMixin):
     """
@@ -18,7 +65,9 @@ class MultiTenantMiddleware(MiddlewareMixin):
         exempt_urls = [
             '/admin/', '/auth/', '/static/', '/media/',
             '/company/register/', '/company/switch/', '/invitation/',
-            '/super-owner/'  # Exempt super owner URLs
+            '/super-owner/',  # Exempt super owner URLs
+            '/register/', '/login/', '/logout/',  # Exempt registration and auth URLs
+            '/registration/'  # Exempt registration status URLs
         ]
         
         if any(request.path.startswith(url) for url in exempt_urls):
@@ -27,6 +76,16 @@ class MultiTenantMiddleware(MiddlewareMixin):
         # Skip company requirement for super owners
         try:
             if hasattr(request.user, 'userprofile') and request.user.userprofile.is_super_owner():
+                return None
+        except Exception as e:
+            # Log the exception for debugging but don't crash
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.debug(f'Super owner check failed: {e}')
+        
+        # Skip company requirement for individual users
+        try:
+            if hasattr(request.user, 'userprofile') and request.user.userprofile.account_type == 'individual':
                 return None
         except:
             pass

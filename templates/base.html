@@ -765,6 +765,13 @@
                         </div>
                         
                         <div class="nav-item">
+                            <a href="{% url 'billing:subscription_overview' %}" class="nav-link {% if 'billing' in request.resolver_match.app_name|default:'' %}active{% endif %}">
+                                <i class="nav-link-icon fas fa-credit-card"></i>
+                                <span class="nav-link-text">Billing</span>
+                            </a>
+                        </div>
+                        
+                        <div class="nav-item">
                             <a href="{% url 'core:company_settings' %}" class="nav-link {% if request.resolver_match.url_name == 'company_settings' %}active{% endif %}">
                                 <i class="nav-link-icon fas fa-cog"></i>
                                 <span class="nav-link-text">Settings</span>

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Registration Requests - Super Owner</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .header { margin-bottom: 30px; }
+        .filters { margin-bottom: 20px; padding: 15px; background-color: #f8f9fa; border-radius: 5px; }
+        .filters form { display: inline-block; margin-right: 20px; }
+        .filters input, .filters select { padding: 8px; margin: 5px; border: 1px solid #ddd; border-radius: 3px; }
+        .requests-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        .requests-table th, .requests-table td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        .requests-table th { background-color: #f8f9fa; font-weight: bold; }
+        .requests-table tr:hover { background-color: #f5f5f5; }
+        .status { padding: 4px 8px; border-radius: 3px; color: white; font-size: 12px; }
+        .status.pending { background-color: #ffc107; color: #000; }
+        .status.approved { background-color: #28a745; }
+        .status.rejected { background-color: #dc3545; }
+        .status.under_review { background-color: #17a2b8; }
+        .button { padding: 8px 12px; margin: 2px; color: white; border: none; border-radius: 3px; cursor: pointer; text-decoration: none; display: inline-block; }
+        .button.approve { background-color: #28a745; }
+        .button.reject { background-color: #dc3545; }
+        .button.view { background-color: #007cba; }
+        .button:hover { opacity: 0.8; }
+        .pagination { text-align: center; margin: 20px 0; }
+        .pagination a { padding: 8px 12px; margin: 0 4px; color: #007cba; text-decoration: none; border: 1px solid #ddd; border-radius: 3px; }
+        .pagination a:hover { background-color: #f8f9fa; }
+        .pagination .current { background-color: #007cba; color: white; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Registration Requests</h1>
+        <p>Manage user and company registration requests</p>
+        <a href="/super-owner/" class="button view">← Back to Dashboard</a>
+    </div>
+    
+    {% if messages %}
+        {% for message in messages %}
+            <div style="padding: 10px; margin-bottom: 10px; border-radius: 3px; {% if message.tags == 'error' %}background-color: #f8d7da; color: #721c24;{% else %}background-color: #d4edda; color: #155724;{% endif %}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+    
+    <div class="filters">
+        <form method="get">
+            <label for="status">Status:</label>
+            <select name="status" id="status">
+                <option value="">All</option>
+                {% for value, label in status_choices %}
+                    <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+            
+            <label for="search">Search:</label>
+            <input type="text" name="search" id="search" value="{{ search_query }}" placeholder="Name, email, company...">
+            
+            <input type="submit" value="Filter" class="button view">
+        </form>
+        
+        <a href="?status=" class="button view">Show All</a>
+    </div>
+    
+    <table class="requests-table">
+        <thead>
+            <tr>
+                <th>Created</th>
+                <th>Type</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Company</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for request in page_obj %}
+            <tr>
+                <td>{{ request.created_at|date:"M d, Y" }}</td>
+                <td>{{ request.get_request_type_display }}</td>
+                <td>{{ request.first_name }} {{ request.last_name }}</td>
+                <td>{{ request.email }}</td>
+                <td>{{ request.company_name|default:"-" }}</td>
+                <td><span class="status {{ request.status }}">{{ request.get_status_display }}</span></td>
+                <td>
+                    <a href="/super-owner/registration-requests/{{ request.id }}/" class="button view">View</a>
+                    {% if request.status == 'pending' %}
+                        <a href="/super-owner/registration-requests/{{ request.id }}/approve/" class="button approve">Approve</a>
+                        <a href="/super-owner/registration-requests/{{ request.id }}/reject/" class="button reject">Reject</a>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" style="text-align: center; padding: 30px; color: #6c757d;">
+                    No registration requests found.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    {% if page_obj.has_other_pages %}
+    <div class="pagination">
+        {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">&laquo; Previous</a>
+        {% endif %}
+        
+        {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+                <span class="current">{{ num }}</span>
+            {% else %}
+                <a href="?page={{ num }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">{{ num }}</a>
+            {% endif %}
+        {% endfor %}
+        
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">Next &raquo;</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</body>
+</html>

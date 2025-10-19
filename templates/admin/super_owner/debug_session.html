@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Session - Super Owner</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .section { margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .section h3 { margin-top: 0; color: #333; }
+        pre { background-color: #f5f5f5; padding: 10px; border-radius: 3px; overflow-x: auto; }
+        .error { color: red; }
+        .success { color: green; }
+        .button { padding: 10px 15px; background-color: #007cba; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        .button:hover { background-color: #005a8b; }
+    </style>
+</head>
+<body>
+    <h1>Super Owner Debug Session</h1>
+    
+    {% if messages %}
+        {% for message in messages %}
+            <div class="section {{ message.tags }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+    
+    <div class="section">
+        <h3>User Information</h3>
+        <pre>{{ user_info|pprint }}</pre>
+    </div>
+    
+    <div class="section">
+        <h3>Profile Information</h3>
+        <pre>{{ profile_info|pprint }}</pre>
+    </div>
+    
+    <div class="section">
+        <h3>Super Owner Information</h3>
+        <pre>{{ super_owner_info|pprint }}</pre>
+    </div>
+    
+    <div class="section">
+        <h3>Request Information</h3>
+        <pre>Path: {{ request_path }}
+Method: {{ request_method }}</pre>
+    </div>
+    
+    <div class="section">
+        <h3>Session Information</h3>
+        <pre>Session Key: {{ session_key }}
+Session Data: {{ session_data|pprint }}</pre>
+    </div>
+    
+    <div class="section">
+        <h3>Active Sessions</h3>
+        <pre>{{ user_sessions|pprint }}</pre>
+    </div>
+    
+    <div class="section">
+        <h3>Actions</h3>
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" name="clear_sessions" class="button">Clear All My Sessions</button>
+        </form>
+        <br>
+        <a href="/super-owner/" class="button">Back to Dashboard</a>
+        <a href="/logout/" class="button">Logout</a>
+    </div>
+</body>
+</html>

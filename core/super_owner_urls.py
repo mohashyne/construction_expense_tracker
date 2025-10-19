@@ -20,6 +20,7 @@ urlpatterns = [
     
     # Registration Requests Management
     path('registration-requests/', super_owner_views.activation_requests_list, name='activation_requests_list'),
+    path('registration-requests/<uuid:request_id>/', super_owner_views.activation_request_detail, name='activation_request_detail'),
     path('registration-requests/<uuid:request_id>/approve/', super_owner_views.approve_activation_request, name='approve_activation_request'),
     path('registration-requests/<uuid:request_id>/reject/', super_owner_views.reject_activation_request, name='reject_activation_request'),
     path('registration-requests/bulk-action/', super_owner_views.bulk_action_requests, name='bulk_action_requests'),
@@ -46,4 +47,5 @@ urlpatterns = [
     # Debug endpoints (only for troubleshooting)
     path('debug/permissions/', debug_views.user_permissions_debug, name='debug_permissions'),
     path('debug/all-users/', debug_views.all_users_permissions_debug, name='debug_all_users'),
+    path('debug/session/', super_owner_views.debug_session, name='debug_session'),
 ]

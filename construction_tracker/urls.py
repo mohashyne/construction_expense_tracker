@@ -26,6 +26,7 @@ urlpatterns = [
     path('projects/', include('projects.urls')),
     path('expenses/', include('expenses.urls')),
     path('contractors/', include('contractors.urls')),
+    path('billing/', include('billing.urls')),
     # Super Owner Management System
     path('super-owner/', include('core.super_owner_urls')),
 ]

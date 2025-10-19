@@ -10,14 +10,36 @@ logger = logging.getLogger(__name__)
 def custom_404_handler(request, exception):
     """Custom 404 error handler"""
     error_id = str(uuid.uuid4())
-    logger.warning(f"404 Error - ID: {error_id}, Path: {request.path}, User: {request.user.id if request.user.is_authenticated else 'Anonymous'}")
+    user_id = request.user.id if request.user.is_authenticated else 'Anonymous'
+    logger.warning(f"404 Error - ID: {error_id}, Path: {request.path}, User: {user_id}")
     
-    context = {
-        'error_code': f"404-{error_id[:8]}",
-        'timestamp': timezone.now(),
-        'path': request.path,
-    }
-    return render(request, 'errors/404.html', context, status=404)
+    # For admin URLs that don't exist, redirect to appropriate dashboard
+    if request.path.startswith('/admin/') and 'activation-requests' in request.path:
+        if request.user.is_authenticated and hasattr(request.user, 'userprofile'):
+            try:
+                if request.user.userprofile.is_super_owner():
+                    from django.shortcuts import redirect
+                    return redirect('/super-owner/registration-requests/')
+            except:
+                pass
+    
+    try:
+        context = {
+            'error_code': f"404-{error_id[:8]}",
+            'timestamp': timezone.now(),
+            'path': request.path,
+        }
+        return render(request, 'errors/404.html', context, status=404)
+    except Exception as e:
+        # If template rendering fails, return a simple HTTP response
+        logger.error(f"404 template rendering failed: {e}")
+        from django.http import HttpResponseNotFound
+        return HttpResponseNotFound(
+            f'<h1>404 - Page Not Found</h1>'
+            f'<p>The requested page "{request.path}" was not found.</p>'
+            f'<p><a href="/">Go Home</a></p>'
+            f'<p>Error Code: 404-{error_id[:8]}</p>'
+        )
 
 def custom_500_handler(request):
     """Custom 500 error handler"""
@@ -130,41 +152,7 @@ ERROR_CODES = {
     'SYS003': 'System maintenance mode',
 }
 
-class ErrorHandlingMiddleware:
-    """
-    Middleware for comprehensive error handling and logging
-    """
-    
-    def __init__(self, get_response):
-        self.get_response = get_response
-
-    def __call__(self, request):
-        response = self.get_response(request)
-        return response
-
-    def process_exception(self, request, exception):
-        """Process unhandled exceptions"""
-        error_id = str(uuid.uuid4())
-        
-        # Log the error with context
-        logger.error(
-            f"Unhandled Exception - ID: {error_id}, "
-            f"Path: {request.path}, "
-            f"User: {request.user.id if request.user.is_authenticated else 'Anonymous'}, "
-            f"Exception: {type(exception).__name__}: {str(exception)}",
-            exc_info=True
-        )
-        
-        # Don't handle the exception in debug mode
-        if settings.DEBUG:
-            return None
-            
-        # Return custom 500 response
-        context = {
-            'error_code': f"500-{error_id[:8]}",
-            'timestamp': timezone.now(),
-        }
-        return render(request, 'errors/500.html', context, status=500)
+# ErrorHandlingMiddleware removed - using ConstructionErrorHandlerMiddleware from error_middleware.py instead
 
 def get_error_message(error_code):
     """Get human-readable error message for error code"""

@@ -10,7 +10,7 @@ import os
 import uuid
 import hashlib
 from datetime import datetime
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, JsonResponse, Http404, HttpResponseForbidden, HttpResponseBadRequest
 from django.template import Template, Context
 from django.conf import settings
 from django.utils import timezone
@@ -84,7 +84,13 @@ class ConstructionErrorHandlerMiddleware:
     def process_exception(self, request, exception):
         """
         Process exceptions and provide detailed error information with unique codes
+        NOTE: Http404, Http403, Http400 are handled by Django's error handlers, not here
         """
+        
+        # Don't handle HTTP error responses - let Django's error handlers deal with them
+        # Http404 -> handler404, PermissionDenied -> handler403, etc.
+        if isinstance(exception, (Http404, PermissionDenied)):
+            return None  # Let Django's error handlers handle these
         
         # Get detailed error information
         exc_type, exc_value, exc_traceback = sys.exc_info()

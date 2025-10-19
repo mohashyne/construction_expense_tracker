@@ -21,7 +21,7 @@ def home(request):
         # Check if user is a super owner - redirect to super owner dashboard
         try:
             if hasattr(request.user, 'userprofile') and request.user.userprofile.is_super_owner():
-                return redirect('super_owner:dashboard')
+                return redirect('/super-owner/')
         except:
             pass
         return redirect('dashboard:dashboard')
@@ -36,13 +36,22 @@ def dashboard(request):
         # Check if user is a super owner - redirect to super owner dashboard
         try:
             if hasattr(user, 'userprofile') and user.userprofile.is_super_owner():
-                return redirect('super_owner:dashboard')
+                return redirect('/super-owner/')
         except:
             pass
         
         current_company = get_current_company(request)
         
-        if not current_company:
+        # Check if user is individual type
+        is_individual = False
+        try:
+            if hasattr(user, 'userprofile') and user.userprofile.account_type == 'individual':
+                is_individual = True
+        except:
+            pass
+        
+        # Individual users don't need a company
+        if not current_company and not is_individual:
             messages.warning(request, 'Please select a company or register one to continue.')
             return redirect('core:company_register')
         
@@ -50,84 +59,103 @@ def dashboard(request):
         end_date = timezone.now().date()
         start_date = end_date - timedelta(days=30)
         
-        # Basic KPIs - Updated for multi-tenant structure
-        total_projects = Project.objects.filter(company=current_company).count()
-        active_projects = Project.objects.filter(
-            company=current_company, 
-            status__in=['planning', 'in_progress']
-        ).count()
-        completed_projects = Project.objects.filter(
-            company=current_company, 
-            status='completed'
-        ).count()
-        overdue_projects = Project.objects.filter(
-            company=current_company,
-            expected_completion_date__lt=end_date,
-            status__in=['planning', 'in_progress']
-        ).count()
-        
-        # Financial KPIs
-        total_budget = Project.objects.filter(company=current_company).aggregate(
-            total=Sum('total_budget')
-        )['total'] or Decimal('0.00')
-        
-        total_expenses = Expense.objects.filter(
-            project__company=current_company
-        ).aggregate(
-            total=Sum('actual_cost')
-        )['total'] or Decimal('0.00')
-        
-        total_planned_expenses = Expense.objects.filter(
-            project__company=current_company
-        ).aggregate(
-            total=Sum('planned_cost')
-        )['total'] or Decimal('0.00')
-        
-        budget_variance = total_budget - total_expenses
-        budget_utilization = (total_expenses / total_budget * 100) if total_budget > 0 else 0
-        
-        # Recent projects
-        recent_projects = Project.objects.filter(company=current_company).order_by('-created_at')[:5]
-        
-        # Recent expenses
-        recent_expenses = Expense.objects.filter(
-            project__company=current_company
-        ).select_related('project').order_by('-expense_date')[:5]
-        
-        # Projects by status (for chart)
-        projects_by_status = Project.objects.filter(company=current_company).values('status').annotate(
-            count=Count('id')
-        )
-        
-        # Monthly expense trend (last 6 months)
-        monthly_expenses = []
-        for i in range(6):
-            month_start = (end_date.replace(day=1) - timedelta(days=i*30)).replace(day=1)
-            month_end = (month_start.replace(day=28) + timedelta(days=4)).replace(day=1) - timedelta(days=1)
+        # Handle data based on user type
+        if is_individual:
+            # Individual users see their personal dashboard with limited functionality
+            total_projects = 0
+            active_projects = 0
+            completed_projects = 0
+            overdue_projects = 0
+            total_budget = Decimal('0.00')
+            total_expenses = Decimal('0.00')
+            total_planned_expenses = Decimal('0.00')
+            budget_variance = Decimal('0.00')
+            budget_utilization = 0
+            recent_projects = []
+            recent_expenses = []
+            projects_by_status = []
+            monthly_expenses = []
+            expenses_by_category = []
+        else:
+            # Company users get full dashboard functionality
+            total_projects = Project.objects.filter(company=current_company).count()
+            active_projects = Project.objects.filter(
+                company=current_company, 
+                status__in=['planning', 'in_progress']
+            ).count()
+            completed_projects = Project.objects.filter(
+                company=current_company, 
+                status='completed'
+            ).count()
+            overdue_projects = Project.objects.filter(
+                company=current_company,
+                expected_completion_date__lt=end_date,
+                status__in=['planning', 'in_progress']
+            ).count()
             
-            month_total = Expense.objects.filter(
-                project__company=current_company,
-                expense_date__range=[month_start, month_end]
-            ).aggregate(total=Sum('actual_cost'))['total'] or Decimal('0.00')
+            # Financial KPIs
+            total_budget = Project.objects.filter(company=current_company).aggregate(
+                total=Sum('total_budget')
+            )['total'] or Decimal('0.00')
             
-            monthly_expenses.append({
-                'month': month_start.strftime('%b %Y'),
-                'total': float(month_total)
-            })
-        
-        monthly_expenses.reverse()
-        
-        # Expenses by category (for pie chart)
-        expenses_by_category = Expense.objects.filter(
-            project__company=current_company
-        ).exclude(
-            category__isnull=True
-        ).values('category__name', 'category__color').annotate(
-            total=Sum('actual_cost')
-        )
+            total_expenses = Expense.objects.filter(
+                project__company=current_company
+            ).aggregate(
+                total=Sum('actual_cost')
+            )['total'] or Decimal('0.00')
+            
+            total_planned_expenses = Expense.objects.filter(
+                project__company=current_company
+            ).aggregate(
+                total=Sum('planned_cost')
+            )['total'] or Decimal('0.00')
+            
+            budget_variance = total_budget - total_expenses
+            budget_utilization = (total_expenses / total_budget * 100) if total_budget > 0 else 0
+            
+            # Recent projects
+            recent_projects = Project.objects.filter(company=current_company).order_by('-created_at')[:5]
+            
+            # Recent expenses
+            recent_expenses = Expense.objects.filter(
+                project__company=current_company
+            ).select_related('project').order_by('-expense_date')[:5]
+            
+            # Projects by status (for chart)
+            projects_by_status = Project.objects.filter(company=current_company).values('status').annotate(
+                count=Count('id')
+            )
+            
+            # Monthly expense trend (last 6 months)
+            monthly_expenses = []
+            for i in range(6):
+                month_start = (end_date.replace(day=1) - timedelta(days=i*30)).replace(day=1)
+                month_end = (month_start.replace(day=28) + timedelta(days=4)).replace(day=1) - timedelta(days=1)
+                
+                month_total = Expense.objects.filter(
+                    project__company=current_company,
+                    expense_date__range=[month_start, month_end]
+                ).aggregate(total=Sum('actual_cost'))['total'] or Decimal('0.00')
+                
+                monthly_expenses.append({
+                    'month': month_start.strftime('%b %Y'),
+                    'total': float(month_total)
+                })
+            
+            monthly_expenses.reverse()
+            
+            # Expenses by category (for pie chart)
+            expenses_by_category = Expense.objects.filter(
+                project__company=current_company
+            ).exclude(
+                category__isnull=True
+            ).values('category__name', 'category__color').annotate(
+                total=Sum('actual_cost')
+            )
         
         context = {
             'current_company': current_company,
+            'is_individual': is_individual,
             'total_projects': total_projects,
             'active_projects': active_projects,
             'completed_projects': completed_projects,

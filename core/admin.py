@@ -232,50 +232,46 @@ class AccountActivationRequestAdmin(SuperOwnerAccessMixin, admin.ModelAdmin):
     
     def action_buttons(self, obj):
         if obj.status == 'pending':
-            approve_url = reverse('admin:approve_activation', args=[obj.pk])
-            reject_url = reverse('admin:reject_activation', args=[obj.pk])
+            # Redirect to super owner dashboard for management
+            detail_url = f'/super-owner/registration-requests/{obj.id}/'
             return format_html(
-                '<a href="{}" class="button">Approve</a> '
-                '<a href="{}" class="button">Reject</a>',
-                approve_url, reject_url
+                '<a href="{}" class="button" target="_blank">Manage in Super Owner Dashboard</a>',
+                detail_url
             )
         return obj.get_status_display()
     action_buttons.short_description = 'Actions'
     
     def get_urls(self):
-        from django.urls import path
+        from django.urls import path, re_path
         urls = super().get_urls()
+        
+        # Override the change view URL to handle UUID properly
+        info = self.model._meta.app_label, self.model._meta.model_name
         custom_urls = [
-            path(
-                'approve/<uuid:request_id>/',
-                self.admin_site.admin_view(self.approve_request),
-                name='approve_activation'
-            ),
-            path(
-                'reject/<uuid:request_id>/',
-                self.admin_site.admin_view(self.reject_request),
-                name='reject_activation'
+            re_path(
+                r'^(.+)/change/$',
+                self.admin_site.admin_view(self.change_view),
+                name='%s_%s_change' % info,
             ),
         ]
-        return custom_urls + urls
+        return custom_urls + urls[1:]  # Skip the default change URL
     
-    def approve_request(self, request, request_id):
-        activation_request = AccountActivationRequest.objects.get(pk=request_id)
+    def change_view(self, request, object_id, form_url='', extra_context=None):
+        """Custom change view that redirects to super owner dashboard"""
         try:
-            activation_request.approve(request.user)
-            messages.success(request, f'Activation request for {activation_request.email} approved.')
-        except Exception as e:
-            messages.error(request, f'Error approving request: {str(e)}')
-        return HttpResponseRedirect('../')
-    
-    def reject_request(self, request, request_id):
-        activation_request = AccountActivationRequest.objects.get(pk=request_id)
-        try:
-            activation_request.reject(request.user, 'Rejected from admin')
-            messages.success(request, f'Activation request for {activation_request.email} rejected.')
-        except Exception as e:
-            messages.error(request, f'Error rejecting request: {str(e)}')
-        return HttpResponseRedirect('../')
+            # Verify the object exists
+            obj = self.get_object(request, object_id)
+            if obj is None:
+                raise self.model.DoesNotExist
+            
+            # Redirect to super owner dashboard for management
+            messages.info(request, f'Managing activation request for {obj.email} in Super Owner Dashboard.')
+            from django.shortcuts import redirect
+            return redirect(f'/super-owner/registration-requests/{obj.id}/')
+            
+        except self.model.DoesNotExist:
+            from django.http import Http404
+            raise Http404(f'Activation request with ID "{object_id}" does not exist.')
     
     def get_queryset(self, request):
         return super().get_queryset(request).select_related(

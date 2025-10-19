@@ -282,6 +282,39 @@ def activation_requests_list(request):
 
 @login_required
 @user_passes_test(can_activate_accounts, login_url='/admin/login/')
+def activation_request_detail(request, request_id):
+    """View activation request details for review"""
+    activation_request = get_object_or_404(AccountActivationRequest, id=request_id)
+    
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        
+        if action == 'approve':
+            try:
+                activation_request.approve(request.user)
+                messages.success(request, f'Activation request for {activation_request.email} has been approved.')
+                return redirect('super_owner:activation_requests_list')
+            except Exception as e:
+                messages.error(request, f'Error approving request: {str(e)}')
+                
+        elif action == 'reject':
+            rejection_reason = request.POST.get('rejection_reason', 'Rejected from admin')
+            try:
+                activation_request.reject(request.user, rejection_reason)
+                messages.success(request, f'Activation request for {activation_request.email} has been rejected.')
+                return redirect('super_owner:activation_requests_list')
+            except Exception as e:
+                messages.error(request, f'Error rejecting request: {str(e)}')
+    
+    context = {
+        'activation_request': activation_request,
+    }
+    
+    return render(request, 'admin/super_owner/activation_request_detail.html', context)
+
+
+@login_required
+@user_passes_test(can_activate_accounts, login_url='/admin/login/')
 @require_POST
 def approve_activation_request(request, request_id):
     """Approve an activation request"""
@@ -879,3 +912,84 @@ def super_owner_backup_management(request):
     
     # Call the regular backup management view, which will detect super owner context
     return backup_management(request)
+
+
+@login_required
+@user_passes_test(is_super_owner, login_url='/admin/login/')
+def debug_session(request):
+    """Debug view for super owners to check session/login issues"""
+    from django.contrib.sessions.models import Session
+    from django.utils import timezone
+    
+    # Get current session info
+    session_key = request.session.session_key
+    session_data = dict(request.session)
+    
+    # Check user info
+    user_info = {
+        'username': request.user.username,
+        'id': request.user.id,
+        'is_authenticated': request.user.is_authenticated,
+        'is_active': request.user.is_active,
+        'is_staff': request.user.is_staff,
+        'is_superuser': request.user.is_superuser,
+    }
+    
+    # Check profile info
+    profile_info = {}
+    try:
+        profile = request.user.userprofile
+        profile_info = {
+            'account_type': profile.account_type,
+            'is_account_active': profile.is_account_active,
+            'is_super_owner': profile.is_super_owner(),
+            'last_company': str(profile.last_company) if profile.last_company else None,
+        }
+    except Exception as e:
+        profile_info['error'] = str(e)
+    
+    # Check super owner info
+    super_owner_info = {}
+    try:
+        super_owner = request.user.super_owner_profile
+        super_owner_info = {
+            'is_primary_owner': super_owner.is_primary_owner,
+            'delegation_level': super_owner.delegation_level,
+            'can_activate_accounts': super_owner.can_activate_accounts,
+            'can_manage_companies': super_owner.can_manage_companies,
+        }
+    except Exception as e:
+        super_owner_info['error'] = str(e)
+    
+    # Check active sessions for this user
+    active_sessions = Session.objects.filter(expire_date__gt=timezone.now())
+    user_sessions = []
+    for session in active_sessions:
+        data = session.get_decoded()
+        if str(request.user.id) == str(data.get('_auth_user_id')):
+            user_sessions.append({
+                'session_key': session.session_key[:10] + '...',
+                'expire_date': session.expire_date,
+            })
+    
+    # Clear session action
+    if request.method == 'POST' and 'clear_sessions' in request.POST:
+        for session in active_sessions:
+            data = session.get_decoded()
+            if str(request.user.id) == str(data.get('_auth_user_id')):
+                session.delete()
+        messages.success(request, 'All your sessions have been cleared. Please login again.')
+        return redirect('/login/')
+    
+    context = {
+        'session_key': session_key,
+        'session_data': session_data,
+        'user_info': user_info,
+        'profile_info': profile_info,
+        'super_owner_info': super_owner_info,
+        'user_sessions': user_sessions,
+        'request_path': request.path,
+        'request_method': request.method,
+    }
+    
+    return render(request, 'admin/super_owner/debug_session.html', context)

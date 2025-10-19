@@ -1,0 +1,271 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Choose Your Plan - Construction Expense Tracker{% endblock %}
+
+{% block extra_css %}
+<style>
+    .plan-card {
+        border: 2px solid #e9ecef;
+        border-radius: 15px;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .plan-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+    
+    .plan-card.featured {
+        border-color: #007bff;
+        transform: scale(1.05);
+    }
+    
+    .plan-card.featured::before {
+        content: "RECOMMENDED";
+        position: absolute;
+        top: 0;
+        right: 0;
+        background: #007bff;
+        color: white;
+        padding: 5px 15px;
+        font-size: 0.8rem;
+        font-weight: bold;
+        transform: rotate(45deg) translate(25%, -50%);
+        transform-origin: center;
+    }
+    
+    .plan-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem 1.5rem;
+        text-align: center;
+    }
+    
+    .plan-price {
+        font-size: 3rem;
+        font-weight: bold;
+        margin: 0.5rem 0;
+    }
+    
+    .plan-period {
+        font-size: 1rem;
+        opacity: 0.8;
+    }
+    
+    .feature-list {
+        list-style: none;
+        padding: 0;
+        margin: 1.5rem 0;
+    }
+    
+    .feature-list li {
+        padding: 0.5rem 0;
+        border-bottom: 1px solid #f8f9fa;
+        display: flex;
+        align-items: center;
+    }
+    
+    .feature-list li:last-child {
+        border-bottom: none;
+    }
+    
+    .feature-list .fa-check {
+        color: #28a745;
+        margin-right: 10px;
+    }
+    
+    .feature-list .fa-times {
+        color: #dc3545;
+        margin-right: 10px;
+    }
+    
+    .current-plan {
+        background: #28a745;
+        color: white;
+        border: none;
+    }
+    
+    .upgrade-btn {
+        background: #007bff;
+        border: none;
+        padding: 12px 30px;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .contact-btn {
+        background: #6c757d;
+        border: none;
+        padding: 12px 30px;
+        font-weight: bold;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2><i class="fas fa-credit-card text-primary"></i> Choose Your Plan</h2>
+                    <p class="text-muted">Select the perfect plan for your construction business needs</p>
+                </div>
+                <a href="{% url 'billing:subscription_overview' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Overview
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {% if current_subscription.has_subscription %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i>
+                You are currently on the <strong>{{ current_subscription.plan.name }}</strong> plan.
+                {% if current_subscription.is_active %}
+                    Your subscription is active.
+                    {% if current_subscription.subscription.end_date %}
+                        It expires on {{ current_subscription.subscription.end_date|date:"M d, Y" }}.
+                    {% endif %}
+                {% else %}
+                    Your subscription has expired. Upgrade now to continue enjoying all features.
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="row">
+        {% for plan_data in plan_comparison %}
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="plan-card {% if plan_data.is_recommended %}featured{% endif %} h-100">
+                <div class="plan-header">
+                    <h3>{{ plan_data.name }}</h3>
+                    <div class="plan-price">${{ plan_data.price }}</div>
+                    <div class="plan-period">per {{ plan_data.billing_period }}</div>
+                </div>
+                
+                <div class="card-body">
+                    <p class="text-muted mb-4">{{ plan_data.description }}</p>
+                    
+                    <ul class="feature-list">
+                        {% for feature in plan_data.features %}
+                        <li>
+                            <i class="fas fa-check"></i>
+                            {{ feature }}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    
+                    <div class="text-center mt-4">
+                        {% if current_subscription.plan and current_subscription.plan.id == plan_data.id and current_subscription.is_active %}
+                            <button class="btn current-plan btn-block" disabled>
+                                <i class="fas fa-check"></i> Current Plan
+                            </button>
+                        {% elif plan_data.name == 'Enterprise' %}
+                            <a href="mailto:sales@constructiontracker.com" class="btn contact-btn btn-block">
+                                <i class="fas fa-envelope"></i> Contact Sales
+                            </a>
+                        {% else %}
+                            <a href="{% url 'billing:payment_method' plan_data.id %}" class="btn upgrade-btn btn-primary btn-block">
+                                {% if current_subscription.has_subscription %}
+                                    <i class="fas fa-arrow-up"></i> Upgrade Now
+                                {% else %}
+                                    <i class="fas fa-credit-card"></i> Get Started
+                                {% endif %}
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="text-center py-5">
+                <i class="fas fa-credit-card fa-4x text-muted mb-3"></i>
+                <h4>No Plans Available</h4>
+                <p class="text-muted">Please contact support for subscription options.</p>
+                <a href="mailto:support@constructiontracker.com" class="btn btn-primary">
+                    <i class="fas fa-envelope"></i> Contact Support
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- FAQ Section -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <h3 class="text-center mb-4">Frequently Asked Questions</h3>
+            <div class="accordion" id="faqAccordion">
+                <div class="card">
+                    <div class="card-header" id="faq1">
+                        <h6 class="mb-0">
+                            <button class="btn btn-link btn-block text-left" type="button" data-bs-toggle="collapse" data-bs-target="#collapse1">
+                                Can I change my plan anytime?
+                            </button>
+                        </h6>
+                    </div>
+                    <div id="collapse1" class="collapse show" data-bs-parent="#faqAccordion">
+                        <div class="card-body">
+                            Yes, you can upgrade or downgrade your plan at any time. Changes take effect at your next billing cycle.
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header" id="faq2">
+                        <h6 class="mb-0">
+                            <button class="btn btn-link btn-block text-left collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse2">
+                                What payment methods do you accept?
+                            </button>
+                        </h6>
+                    </div>
+                    <div id="collapse2" class="collapse" data-bs-parent="#faqAccordion">
+                        <div class="card-body">
+                            We accept credit cards, bank transfers, and Paystack for Nigerian businesses.
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header" id="faq3">
+                        <h6 class="mb-0">
+                            <button class="btn btn-link btn-block text-left collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse3">
+                                Is there a free trial?
+                            </button>
+                        </h6>
+                    </div>
+                    <div id="collapse3" class="collapse" data-bs-parent="#faqAccordion">
+                        <div class="card-body">
+                            Yes, all plans come with a 14-day free trial. No credit card required to start.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add smooth scrolling for plan selection
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            document.querySelector(this.getAttribute('href')).scrollIntoView({
+                behavior: 'smooth'
+            });
+        });
+    });
+});
+</script>
+{% endblock %}

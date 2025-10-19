@@ -1,4 +1,5 @@
 from django.urls import path
+from django.shortcuts import redirect
 from . import views
 from . import error_test_views
 from . import super_owner_views
@@ -55,8 +56,7 @@ urlpatterns = [
     path('super-owner/profile/', super_owner_views.super_owner_profile, name='super_owner_profile'),
     path('super-owner/bulk-action/', super_owner_views.bulk_action_requests, name='bulk_action_requests'),
     path('super-owner/export/<str:data_type>/', super_owner_views.export_data, name='export_data'),
-    path('admin/activation-requests/', views.activation_requests_list, name='activation_requests_list'),
-    path('admin/activation-requests/<uuid:request_id>/', views.activation_request_detail, name='activation_request_detail'),
+    # Legacy admin URLs removed - use Super Owner dashboard instead
     path('admin/documents/<int:document_id>/review/', views.document_review, name='document_review'),
     path('admin/documents/<int:document_id>/download/', views.serve_document, name='serve_document'),
     
