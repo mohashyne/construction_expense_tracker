@@ -3924,3 +3924,4 @@ INFO 2025-10-19 17:37:01,921 basehttp 64269 123145604018176 - Broken pipe from (
 WARNING 2025-10-19 17:37:01,926 log 64269 123145671176192 Not Found: /billing/choose-plan/https://www.webmobilefirst.com/en/support/
 WARNING 2025-10-19 17:37:01,928 basehttp 64269 123145620807680 "GET /billing/choose-plan/https://www.webmobilefirst.com/en/contact/?source=report-bug&url=http://127.0.0.1:8000/login/?next=/profile/&client_id=905914f4-01cf-459c-bdc5-5810665fca6b HTTP/1.1" 404 18036
 WARNING 2025-10-19 17:37:01,928 basehttp 64269 123145671176192 "GET /billing/choose-plan/https://www.webmobilefirst.com/en/support/?client_id=905914f4-01cf-459c-bdc5-5810665fca6b HTTP/1.1" 404 17962
+INFO 2025-10-19 20:01:15,131 autoreload 20543 140704704337664 Watching for file changes with StatReloader
