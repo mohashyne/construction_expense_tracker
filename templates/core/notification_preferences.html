@@ -1,0 +1,347 @@
+{% extends 'base.html' %}
+
+{% block title %}Notification Preferences - ConstructPro{% endblock %}
+
+{% block page_title %}Notification Preferences{% endblock %}
+{% block page_subtitle %}Manage how you receive notifications{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <div class="col-lg-8">
+        <form method="post" id="preferences-form">
+            {% csrf_token %}
+            
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-cog me-2"></i>Notification Settings
+                    </h5>
+                    <p class="text-muted mb-0">Choose which notifications you want to receive and how</p>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Notification Type</th>
+                                    <th class="text-center">In-App</th>
+                                    <th class="text-center">Email</th>
+                                    <th class="text-center">SMS</th>
+                                    <th class="text-center">Priority</th>
+                                    <th class="text-center">Control</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for pref in preferences %}
+                                <tr class="notification-row" data-template-id="{{ pref.notification_template.id }}">
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="me-3">
+                                                {% if pref.notification_template.default_priority == 'urgent' %}
+                                                    <i class="fas fa-exclamation-triangle text-danger"></i>
+                                                {% elif pref.notification_template.default_priority == 'high' %}
+                                                    <i class="fas fa-exclamation-circle text-warning"></i>
+                                                {% elif pref.notification_template.default_priority == 'medium' %}
+                                                    <i class="fas fa-info-circle text-info"></i>
+                                                {% else %}
+                                                    <i class="fas fa-circle text-muted"></i>
+                                                {% endif %}
+                                            </div>
+                                            <div>
+                                                <div class="fw-semibold">{{ pref.notification_template.name }}</div>
+                                                <small class="text-muted">{{ pref.notification_template.description }}</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    
+                                    <!-- In-App Toggle -->
+                                    <td class="text-center">
+                                        <div class="form-check form-switch d-flex justify-content-center">
+                                            <input class="form-check-input notification-toggle" 
+                                                   type="checkbox" 
+                                                   id="in_app_{{ pref.id }}"
+                                                   name="in_app_{{ pref.id }}"
+                                                   data-type="in_app"
+                                                   {% if pref.in_app_enabled %}checked{% endif %}
+                                                   {% if not pref.can_user_modify %}disabled{% endif %}>
+                                        </div>
+                                    </td>
+                                    
+                                    <!-- Email Toggle -->
+                                    <td class="text-center">
+                                        <div class="form-check form-switch d-flex justify-content-center">
+                                            <input class="form-check-input notification-toggle" 
+                                                   type="checkbox" 
+                                                   id="email_{{ pref.id }}"
+                                                   name="email_{{ pref.id }}"
+                                                   data-type="email"
+                                                   {% if pref.email_enabled %}checked{% endif %}
+                                                   {% if not pref.can_user_modify %}disabled{% endif %}>
+                                        </div>
+                                    </td>
+                                    
+                                    <!-- SMS Toggle -->
+                                    <td class="text-center">
+                                        <div class="form-check form-switch d-flex justify-content-center">
+                                            <input class="form-check-input notification-toggle" 
+                                                   type="checkbox" 
+                                                   id="sms_{{ pref.id }}"
+                                                   name="sms_{{ pref.id }}"
+                                                   data-type="sms"
+                                                   {% if pref.sms_enabled %}checked{% endif %}
+                                                   {% if not pref.can_user_modify %}disabled{% endif %}>
+                                        </div>
+                                    </td>
+                                    
+                                    <!-- Priority Badge -->
+                                    <td class="text-center">
+                                        <span class="badge bg-{% if pref.notification_template.default_priority == 'urgent' %}danger{% elif pref.notification_template.default_priority == 'high' %}warning{% elif pref.notification_template.default_priority == 'medium' %}info{% else %}secondary{% endif %}">
+                                            {{ pref.notification_template.get_default_priority_display }}
+                                        </span>
+                                    </td>
+                                    
+                                    <!-- Control Level -->
+                                    <td class="text-center">
+                                        {% if pref.notification_template.control_level == 'admin_only' %}
+                                            <span class="badge bg-danger" title="Admin controlled - cannot be disabled">
+                                                <i class="fas fa-lock"></i> Admin Only
+                                            </span>
+                                        {% elif pref.notification_template.control_level == 'admin_default' %}
+                                            <span class="badge bg-warning" title="Admin default - you can override">
+                                                <i class="fas fa-user-shield"></i> Admin Default
+                                            </span>
+                                        {% elif pref.notification_template.control_level == 'role_based' %}
+                                            <span class="badge bg-info" title="Role-based access">
+                                                <i class="fas fa-users"></i> Role Based
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-success" title="You have full control">
+                                                <i class="fas fa-user"></i> User Choice
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="text-muted">
+                            <small>
+                                <i class="fas fa-info-circle me-1"></i>
+                                Changes are saved automatically. Locked notifications are controlled by administrators.
+                            </small>
+                        </div>
+                        <button type="button" class="btn btn-primary" id="save-all-btn" style="display: none;">
+                            <i class="fas fa-save me-1"></i>Save Changes
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+    
+    <div class="col-lg-4">
+        <!-- Contact Info Card -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-address-book me-2"></i>Contact Information
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Email Address</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                        <input type="email" class="form-control" value="{{ user.email }}" readonly>
+                    </div>
+                    <small class="text-muted">Email notifications will be sent to this address</small>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Phone Number</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-phone"></i></span>
+                        <input type="tel" class="form-control" 
+                               value="{{ user.userprofile.phone|default:'Not provided' }}" 
+                               placeholder="Add phone for SMS notifications">
+                    </div>
+                    <small class="text-muted">Required for SMS notifications</small>
+                </div>
+                
+                <a href="{% url 'core:profile' %}" class="btn btn-outline-primary btn-sm">
+                    <i class="fas fa-edit me-1"></i>Update Contact Info
+                </a>
+            </div>
+        </div>
+        
+        <!-- Quick Stats -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-chart-pie me-2"></i>Notification Summary
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-4">
+                        <div class="h5 fw-bold text-primary" id="total-notifications">{{ preferences|length }}</div>
+                        <div class="text-muted small">Total</div>
+                    </div>
+                    <div class="col-4">
+                        <div class="h5 fw-bold text-success" id="enabled-notifications">
+                            {% for pref in preferences %}{% if pref.is_enabled %}{{ forloop.counter0|add:1 }}{% endif %}{% endfor %}
+                        </div>
+                        <div class="text-muted small">Enabled</div>
+                    </div>
+                    <div class="col-4">
+                        <div class="h5 fw-bold text-warning" id="email-notifications">
+                            {% for pref in preferences %}{% if pref.email_enabled %}{{ forloop.counter0|add:1 }}{% endif %}{% endfor %}
+                        </div>
+                        <div class="text-muted small">Email</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Legend -->
+        <div class="card">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-question-circle me-2"></i>Control Levels
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    <div class="list-group-item d-flex align-items-center px-0">
+                        <span class="badge bg-danger me-2"><i class="fas fa-lock"></i></span>
+                        <div>
+                            <div class="fw-semibold">Admin Only</div>
+                            <small class="text-muted">Cannot be disabled by users</small>
+                        </div>
+                    </div>
+                    <div class="list-group-item d-flex align-items-center px-0">
+                        <span class="badge bg-warning me-2"><i class="fas fa-user-shield"></i></span>
+                        <div>
+                            <div class="fw-semibold">Admin Default</div>
+                            <small class="text-muted">Admin sets default, users can override</small>
+                        </div>
+                    </div>
+                    <div class="list-group-item d-flex align-items-center px-0">
+                        <span class="badge bg-info me-2"><i class="fas fa-users"></i></span>
+                        <div>
+                            <div class="fw-semibold">Role Based</div>
+                            <small class="text-muted">Depends on your role permissions</small>
+                        </div>
+                    </div>
+                    <div class="list-group-item d-flex align-items-center px-0 border-0">
+                        <span class="badge bg-success me-2"><i class="fas fa-user"></i></span>
+                        <div>
+                            <div class="fw-semibold">User Choice</div>
+                            <small class="text-muted">Full control over notifications</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.form-switch .form-check-input {
+    width: 2.5rem;
+    height: 1.25rem;
+}
+
+.notification-row:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+.table th {
+    font-weight: 600;
+    color: var(--gray-700);
+    font-size: 0.8125rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.badge {
+    font-size: 0.7rem;
+}
+
+.card-header {
+    background: var(--gray-50);
+    border-bottom: 1px solid var(--gray-200);
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const toggles = document.querySelectorAll('.notification-toggle');
+    let hasChanges = false;
+    
+    toggles.forEach(toggle => {
+        toggle.addEventListener('change', function() {
+            if (!this.disabled) {
+                hasChanges = true;
+                updatePreference(this);
+            }
+        });
+    });
+    
+    function updatePreference(toggle) {
+        const preferenceId = toggle.id.split('_').slice(-1)[0];
+        const type = toggle.dataset.type;
+        const enabled = toggle.checked;
+        
+        // Show loading state
+        const originalToggle = toggle;
+        originalToggle.disabled = true;
+        
+        fetch(`{% url 'core:update_notification_preference' %}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            },
+            body: JSON.stringify({
+                preference_id: preferenceId,
+                type: type,
+                enabled: enabled
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                showNotification('Preference updated successfully', 'success');
+                updateStats();
+            } else {
+                showNotification('Failed to update preference', 'error');
+                // Revert toggle
+                originalToggle.checked = !enabled;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('Network error', 'error');
+            originalToggle.checked = !enabled;
+        })
+        .finally(() => {
+            originalToggle.disabled = false;
+        });
+    }
+    
+    function updateStats() {
+        // Update statistics in the sidebar
+        const enabledCount = document.querySelectorAll('.notification-toggle[data-type="in_app"]:checked:not(:disabled)').length;
+        const emailCount = document.querySelectorAll('.notification-toggle[data-type="email"]:checked:not(:disabled)').length;
+        
+        document.getElementById('enabled-notifications').textContent = enabledCount;
+        document.getElementById('email-notifications').textContent = emailCount;
+    }
+});
+</script>
+{% endblock %}

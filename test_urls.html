@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ConstructPro Registration Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+            line-height: 1.6;
+        }
+        .test-card {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            background: #f9fafb;
+        }
+        .btn {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            background: #16a34a;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            margin: 0.5rem;
+            transition: background 0.2s;
+        }
+        .btn:hover {
+            background: #15803d;
+        }
+        .btn-secondary {
+            background: #6b7280;
+        }
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+        .status {
+            margin: 1rem 0;
+            padding: 1rem;
+            border-radius: 6px;
+            font-family: monospace;
+        }
+        .status.success {
+            background: #dcfce7;
+            color: #15803d;
+            border: 1px solid #86efac;
+        }
+        .status.error {
+            background: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fca5a5;
+        }
+    </style>
+</head>
+<body>
+    <h1>🏗️ ConstructPro Registration System Test</h1>
+    
+    <div class="test-card">
+        <h2>📋 Test Registration URLs</h2>
+        <p>Click the buttons below to test the new registration system:</p>
+        
+        <div>
+            <a href="http://127.0.0.1:8000/register/company/" class="btn" target="_blank">
+                🏢 Test Company Registration
+            </a>
+            
+            <a href="http://127.0.0.1:8000/register/individual/" class="btn" target="_blank">
+                👤 Test Individual Registration
+            </a>
+            
+            <a href="http://127.0.0.1:8000/login/" class="btn btn-secondary" target="_blank">
+                🔐 Test Login Page
+            </a>
+        </div>
+    </div>
+    
+    <div class="test-card">
+        <h2>✅ Expected Results</h2>
+        <ul>
+            <li><strong>Company Registration:</strong> Should show form with document upload fields</li>
+            <li><strong>Individual Registration:</strong> Should show simplified form with ID upload</li>
+            <li><strong>Login Page:</strong> Should show "Email or Username" field with registration links</li>
+        </ul>
+    </div>
+    
+    <div class="test-card">
+        <h2>🛠️ Troubleshooting</h2>
+        <p>If pages show as blank or empty:</p>
+        <ol>
+            <li>Ensure Django development server is running on port 8000</li>
+            <li>Check browser console for JavaScript errors</li>
+            <li>Try refreshing the page or clearing browser cache</li>
+            <li>Verify all migrations have been applied</li>
+        </ol>
+    </div>
+    
+    <div class="test-card">
+        <h2>🌐 Server Status Check</h2>
+        <p>Click to verify server connectivity:</p>
+        <button onclick="testServer()" class="btn">Test Server Connection</button>
+        <div id="serverStatus" class="status" style="display: none;"></div>
+    </div>
+    
+    <script>
+        async function testServer() {
+            const statusDiv = document.getElementById('serverStatus');
+            statusDiv.style.display = 'block';
+            statusDiv.textContent = 'Testing server connection...';
+            statusDiv.className = 'status';
+            
+            try {
+                const response = await fetch('http://127.0.0.1:8000/register/company/');
+                if (response.ok) {
+                    statusDiv.textContent = '✅ Server is running and registration page loads successfully!';
+                    statusDiv.className = 'status success';
+                } else {
+                    statusDiv.textContent = `❌ Server error: ${response.status} ${response.statusText}`;
+                    statusDiv.className = 'status error';
+                }
+            } catch (error) {
+                statusDiv.textContent = `❌ Connection failed: ${error.message}. Make sure Django server is running.`;
+                statusDiv.className = 'status error';
+            }
+        }
+        
+        // Auto-test on page load
+        window.addEventListener('load', () => {
+            setTimeout(testServer, 1000);
+        });
+    </script>
+</body>
+</html>

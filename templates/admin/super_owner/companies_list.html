@@ -1,0 +1,376 @@
+{% extends "super_owner_base.html" %}
+
+{% block page_title %}Companies Management{% endblock %}
+{% block page_subtitle %}Manage all companies in the system{% endblock %}
+
+{% block main_content %}
+<div class="row">
+    <div class="col-12">
+        <!-- Companies Overview Cards -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <div class="badge badge-primary badge-lg">
+                            <i class="fas fa-building"></i>
+                            {{ total_companies }}
+                        </div>
+                        <p class="text-muted mt-2">Total Companies</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <div class="badge badge-success badge-lg">
+                            <i class="fas fa-check-circle"></i>
+                            {{ active_companies }}
+                        </div>
+                        <p class="text-muted mt-2">Active Companies</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <div class="badge badge-warning badge-lg">
+                            <i class="fas fa-pause-circle"></i>
+                            {{ inactive_companies }}
+                        </div>
+                        <p class="text-muted mt-2">Inactive Companies</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <div class="badge badge-info badge-lg">
+                            <i class="fas fa-plus-circle"></i>
+                            {{ new_this_month }}
+                        </div>
+                        <p class="text-muted mt-2">New This Month</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Companies List -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h3 class="card-title">
+                    <i class="fas fa-building"></i> Companies List
+                </h3>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-outline-primary" onclick="exportCompanies()">
+                        <i class="fas fa-download"></i> Export
+                    </button>
+                    <button class="btn btn-sm btn-primary" onclick="refreshData()">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <!-- Search and Filter -->
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <input type="text" class="form-control" id="searchCompanies" placeholder="Search companies..." onkeyup="filterCompanies()">
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-control" id="statusFilter" onchange="filterCompanies()">
+                            <option value="">All Status</option>
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-control" id="subscriptionFilter" onchange="filterCompanies()">
+                            <option value="">All Plans</option>
+                            <option value="free">Free</option>
+                            <option value="basic">Basic</option>
+                            <option value="premium">Premium</option>
+                            <option value="enterprise">Enterprise</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Companies Table -->
+                {% if companies %}
+                    <div class="admin-table-wrapper">
+                        <table class="table table-hover">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Company</th>
+                                    <th>Contact</th>
+                                    <th>Plan</th>
+                                    <th>Status</th>
+                                    <th>Members</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="companiesTableBody">
+                                {% for company in companies %}
+                                    <tr data-status="{{ company.is_active|yesno:'active,inactive' }}" data-subscription="{{ company.subscription_type }}">
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="company-avatar me-2">
+                                                    {% if company.logo %}
+                                                        <img src="{{ company.logo.url }}" alt="{{ company.name }}" class="rounded-circle" width="40" height="40">
+                                                    {% else %}
+                                                        <div class="avatar-placeholder">
+                                                            {{ company.name.0|upper }}
+                                                        </div>
+                                                    {% endif %}
+                                                </div>
+                                                <div>
+                                                    <h6 class="mb-0">{{ company.name }}</h6>
+                                                    <small class="text-muted">{{ company.slug }}</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <div>{{ company.email }}</div>
+                                                {% if company.phone %}
+                                                    <small class="text-muted">{{ company.phone }}</small>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-{% if company.subscription_type == 'enterprise' %}success{% elif company.subscription_type == 'premium' %}primary{% elif company.subscription_type == 'basic' %}info{% else %}secondary{% endif %}">
+                                                {{ company.get_subscription_type_display }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {% if company.is_active %}
+                                                <span class="badge badge-success">
+                                                    <i class="fas fa-check-circle"></i> Active
+                                                </span>
+                                            {% else %}
+                                                <span class="badge badge-warning">
+                                                    <i class="fas fa-pause-circle"></i> Inactive
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-light">
+                                                <i class="fas fa-users"></i> {{ company.member_count|default:0 }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">
+                                                {{ company.created_at|date:"M d, Y" }}<br>
+                                                {{ company.created_at|timesince }} ago
+                                            </small>
+                                        </td>
+                                        <td>
+                                            <div class="dropdown">
+                                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-toggle="dropdown">
+                                                    <i class="fas fa-ellipsis-v"></i>
+                                                </button>
+                                                <div class="dropdown-menu">
+                                                    <a class="dropdown-item" href="{% url 'super_owner:company_detail' company.id %}">
+                                                        <i class="fas fa-eye"></i> View Details
+                                                    </a>
+                                                    <a class="dropdown-item" href="#" onclick="toggleCompanyStatus('{{ company.id }}', {{ company.is_active|yesno:'false,true' }})">
+                                                        {% if company.is_active %}
+                                                            <i class="fas fa-pause"></i> Deactivate
+                                                        {% else %}
+                                                            <i class="fas fa-play"></i> Activate
+                                                        {% endif %}
+                                                    </a>
+                                                    <div class="dropdown-divider"></div>
+                                                    <a class="dropdown-item" href="/admin/core/company/{{ company.id }}/change/" target="_blank">
+                                                        <i class="fas fa-edit"></i> Edit in Django Admin
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    {% if is_paginated %}
+                        <nav aria-label="Companies pagination" class="mt-3">
+                            <ul class="pagination justify-content-center">
+                                {% if page_obj.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page=1">First</a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                                    </li>
+                                {% endif %}
+
+                                <li class="page-item active">
+                                    <span class="page-link">
+                                        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                                    </span>
+                                </li>
+
+                                {% if page_obj.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Last</a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    {% endif %}
+
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-building fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No companies found</h5>
+                        <p class="text-muted">No companies are registered in the system yet.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Search and filter functionality
+function filterCompanies() {
+    const searchTerm = document.getElementById('searchCompanies').value.toLowerCase();
+    const statusFilter = document.getElementById('statusFilter').value;
+    const subscriptionFilter = document.getElementById('subscriptionFilter').value;
+    const rows = document.querySelectorAll('#companiesTableBody tr');
+
+    rows.forEach(row => {
+        const companyName = row.querySelector('h6').textContent.toLowerCase();
+        const email = row.querySelector('td:nth-child(2) div').textContent.toLowerCase();
+        const status = row.getAttribute('data-status');
+        const subscription = row.getAttribute('data-subscription');
+
+        const matchesSearch = companyName.includes(searchTerm) || email.includes(searchTerm);
+        const matchesStatus = !statusFilter || status === statusFilter;
+        const matchesSubscription = !subscriptionFilter || subscription === subscriptionFilter;
+
+        if (matchesSearch && matchesStatus && matchesSubscription) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+
+// Export companies
+function exportCompanies() {
+    window.location.href = '{% url "super_owner:export_data" "companies" %}';
+}
+
+// Refresh data
+function refreshData() {
+    window.location.reload();
+}
+
+// Toggle company status
+function toggleCompanyStatus(companyId, newStatus) {
+    if (confirm('Are you sure you want to ' + (newStatus ? 'activate' : 'deactivate') + ' this company?')) {
+        fetch(`{% url 'super_owner:company_toggle_status' '00000000-0000-0000-0000-000000000000' %}`.replace('00000000-0000-0000-0000-000000000000', companyId), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({
+                'is_active': newStatus
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error updating company status: ' + (data.message || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while updating company status');
+        });
+    }
+}
+</script>
+
+<style>
+.avatar-placeholder {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: var(--admin-accent);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 1.125rem;
+}
+
+.form-control {
+    border: 1px solid var(--gray-300);
+    border-radius: 0.375rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.form-control:focus {
+    border-color: var(--admin-accent);
+    outline: 0;
+    box-shadow: 0 0 0 0.125rem rgba(245, 158, 11, 0.25);
+}
+
+.table thead th {
+    background-color: var(--gray-50);
+    border-bottom: 2px solid var(--gray-200);
+    font-weight: 600;
+    color: var(--gray-700);
+}
+
+.table-hover tbody tr:hover {
+    background-color: var(--gray-50);
+}
+
+.pagination .page-link {
+    color: var(--admin-accent);
+    border-color: var(--gray-300);
+}
+
+.pagination .page-item.active .page-link {
+    background-color: var(--admin-accent);
+    border-color: var(--admin-accent);
+    color: white;
+}
+
+.pagination .page-link:hover {
+    background-color: var(--gray-100);
+    border-color: var(--gray-400);
+    color: var(--admin-accent-light);
+}
+
+.dropdown-menu {
+    border: 1px solid var(--gray-200);
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+}
+
+.dropdown-item:hover {
+    background-color: var(--gray-100);
+    color: var(--gray-900);
+}
+
+.gap-2 > * + * {
+    margin-left: 0.5rem;
+}
+</style>
+
+<!-- Add CSRF token for AJAX requests -->
+{% csrf_token %}
+{% endblock %}

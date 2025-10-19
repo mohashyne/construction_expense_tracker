@@ -1,0 +1,192 @@
+{% extends 'base.html' %}
+
+{% block title %}Notifications{% if company %} - {{ company.name }}{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-bell me-2"></i>Notifications
+        </h1>
+        {% if company %}
+        <span class="badge bg-primary fs-6">{{ company.name }}</span>
+        {% endif %}
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Recent Notifications</h6>
+                </div>
+                <div class="card-body">
+                    {% for notification in notifications %}
+                    <div class="d-flex align-items-start mb-4 pb-3 border-bottom">
+                        <div class="me-3">
+                            {% if notification.priority == 'urgent' %}
+                                <div class="icon-circle bg-danger">
+                                    <i class="fas fa-exclamation text-white"></i>
+                                </div>
+                            {% elif notification.priority == 'high' %}
+                                <div class="icon-circle bg-warning">
+                                    <i class="fas fa-exclamation-triangle text-white"></i>
+                                </div>
+                            {% elif notification.priority == 'medium' %}
+                                <div class="icon-circle bg-info">
+                                    <i class="fas fa-info text-white"></i>
+                                </div>
+                            {% else %}
+                                <div class="icon-circle bg-secondary">
+                                    <i class="fas fa-circle text-white"></i>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h6 class="mb-1 {% if not notification.is_read %}fw-bold{% endif %}">
+                                    {{ notification.title }}
+                                </h6>
+                                <small class="text-muted">
+                                    {{ notification.created_at|timesince }} ago
+                                </small>
+                            </div>
+                            <p class="mb-2 text-muted">{{ notification.message }}</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <span class="badge bg-{{ notification.priority }}">
+                                        {{ notification.get_priority_display }}
+                                    </span>
+                                    {% if notification.sender %}
+                                    <small class="text-muted ms-2">
+                                        from {{ notification.sender.get_full_name|default:notification.sender.username }}
+                                    </small>
+                                    {% endif %}
+                                </div>
+                                {% if not notification.is_read %}
+                                <button class="btn btn-sm btn-outline-primary mark-read-btn" 
+                                        data-notification-id="{{ notification.id }}">
+                                    Mark as Read
+                                </button>
+                                {% else %}
+                                <span class="badge bg-success">Read</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-bell-slash fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">No notifications yet</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Notification Summary</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <div class="h4 font-weight-bold text-warning">
+                                {{ notifications|length }}
+                            </div>
+                            <div class="text-muted">Total</div>
+                        </div>
+                        <div class="col-6">
+                            <div class="h4 font-weight-bold text-primary">
+                                {% for notification in notifications %}
+                                    {% if not notification.is_read %}{{ forloop.counter0|add:1 }}{% endif %}
+                                {% empty %}0{% endfor %}
+                            </div>
+                            <div class="text-muted">Unread</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Notification Types</h6>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        <div class="list-group-item d-flex justify-content-between">
+                            <span><i class="fas fa-dollar-sign text-success me-2"></i>Expenses</span>
+                            <span class="badge bg-success">
+                                {{ notifications|dictsort:"notification_type"|slice:":5"|length }}
+                            </span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between">
+                            <span><i class="fas fa-project-diagram text-primary me-2"></i>Projects</span>
+                            <span class="badge bg-primary">
+                                {{ notifications|dictsort:"notification_type"|slice:"5:10"|length }}
+                            </span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between">
+                            <span><i class="fas fa-users text-info me-2"></i>Team</span>
+                            <span class="badge bg-info">
+                                {{ notifications|dictsort:"notification_type"|slice:"10:15"|length }}
+                            </span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between">
+                            <span><i class="fas fa-cog text-secondary me-2"></i>System</span>
+                            <span class="badge bg-secondary">
+                                {{ notifications|dictsort:"notification_type"|slice:"15:"|length }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.icon-circle {
+    height: 2.5rem;
+    width: 2.5rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.text-gray-800 {
+    color: #5a5c69 !important;
+}
+
+.border-bottom:last-child {
+    border-bottom: none !important;
+}
+</style>
+
+<script>
+// Mark notification as read
+document.querySelectorAll('.mark-read-btn').forEach(button => {
+    button.addEventListener('click', function() {
+        const notificationId = this.dataset.notificationId;
+        
+        fetch(`/notifications/${notificationId}/read/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                this.outerHTML = '<span class="badge bg-success">Read</span>';
+                // Update unread count if needed
+                location.reload();
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    });
+});
+</script>
+{% endblock %}

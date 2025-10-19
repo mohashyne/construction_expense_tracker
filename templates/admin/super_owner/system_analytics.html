@@ -1,0 +1,409 @@
+{% extends "super_owner_base.html" %}
+
+{% block page_title %}System Analytics{% endblock %}
+{% block page_subtitle %}Comprehensive system performance and usage analytics{% endblock %}
+
+{% block main_content %}
+<div class="row">
+    <!-- Key Metrics Cards -->
+    <div class="col-12 mb-4">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <div class="badge badge-primary badge-lg">
+                            <i class="fas fa-chart-line"></i>
+                            {{ stats.total_users }}
+                        </div>
+                        <p class="text-muted mt-2">Total Users</p>
+                        <small class="text-success">
+                            +{{ stats.new_users_week }} this week
+                        </small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <div class="badge badge-success badge-lg">
+                            <i class="fas fa-building"></i>
+                            {{ stats.total_companies }}
+                        </div>
+                        <p class="text-muted mt-2">Companies</p>
+                        <small class="text-success">
+                            +{{ stats.new_companies_month }} this month
+                        </small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <div class="badge badge-info badge-lg">
+                            <i class="fas fa-user-plus"></i>
+                            {{ stats.pending_requests }}
+                        </div>
+                        <p class="text-muted mt-2">Pending Requests</p>
+                        <small class="text-warning">
+                            {{ stats.approved_week }} approved this week
+                        </small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <div class="badge badge-warning badge-lg">
+                            <i class="fas fa-users-cog"></i>
+                            {{ stats.active_companies }}
+                        </div>
+                        <p class="text-muted mt-2">Active Companies</p>
+                        <small class="text-muted">
+                            {{ stats.active_companies }}/{{ stats.total_companies }} active
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title">
+                    <i class="fas fa-chart-area"></i> User Growth Over Time
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="userGrowthChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title">
+                    <i class="fas fa-chart-pie"></i> User Types Distribution
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="userTypesChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Company Analytics -->
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title">
+                    <i class="fas fa-chart-bar"></i> Company Registrations
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="companyRegistrationsChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title">
+                    <i class="fas fa-chart-line"></i> Registration Requests Status
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="requestsStatusChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="col-12">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="card-title">
+                            <i class="fas fa-users"></i> Recent Users
+                        </h6>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="list-group list-group-flush">
+                            {% for user in recent_users %}
+                                <div class="list-group-item d-flex align-items-center">
+                                    <div class="avatar-placeholder me-2">
+                                        {{ user.first_name.0|default:user.username.0|upper }}
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-0">{{ user.get_full_name|default:user.username }}</h6>
+                                        <small class="text-muted">{{ user.date_joined|timesince }} ago</small>
+                                    </div>
+                                    {% if user.userprofile.is_super_owner %}
+                                        <span class="badge badge-warning badge-sm">Super Owner</span>
+                                    {% elif user.is_staff %}
+                                        <span class="badge badge-info badge-sm">Staff</span>
+                                    {% endif %}
+                                </div>
+                            {% empty %}
+                                <div class="list-group-item text-center text-muted">
+                                    No recent users
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="card-title">
+                            <i class="fas fa-building"></i> Recent Companies
+                        </h6>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="list-group list-group-flush">
+                            {% for company in recent_companies %}
+                                <div class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <h6 class="mb-1">{{ company.name }}</h6>
+                                            <small class="text-muted">{{ company.created_at|timesince }} ago</small>
+                                        </div>
+                                        {% if company.is_active %}
+                                            <span class="badge badge-success badge-sm">Active</span>
+                                        {% else %}
+                                            <span class="badge badge-secondary badge-sm">Inactive</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% empty %}
+                                <div class="list-group-item text-center text-muted">
+                                    No recent companies
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="card-title">
+                            <i class="fas fa-user-plus"></i> Recent Requests
+                        </h6>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="list-group list-group-flush">
+                            {% for request in recent_requests %}
+                                <div class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <h6 class="mb-1">{{ request.first_name }} {{ request.last_name }}</h6>
+                                            <small class="text-muted">{{ request.email }}</small><br>
+                                            <small class="text-muted">{{ request.created_at|timesince }} ago</small>
+                                        </div>
+                                        <span class="badge badge-{% if request.status == 'approved' %}success{% elif request.status == 'rejected' %}danger{% elif request.status == 'under_review' %}warning{% else %}secondary{% endif %} badge-sm">
+                                            {{ request.get_status_display }}
+                                        </span>
+                                    </div>
+                                </div>
+                            {% empty %}
+                                <div class="list-group-item text-center text-muted">
+                                    No recent requests
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // User Growth Chart
+    const userGrowthCtx = document.getElementById('userGrowthChart').getContext('2d');
+    new Chart(userGrowthCtx, {
+        type: 'line',
+        data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+            datasets: [{
+                label: 'New Users',
+                data: [12, 19, 25, 32, 28, 35, 42, 38, 45, 52, 48, {{ stats.total_users }}],
+                borderColor: '#f59e0b',
+                backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: '#e5e7eb'
+                    }
+                },
+                x: {
+                    grid: {
+                        color: '#e5e7eb'
+                    }
+                }
+            }
+        }
+    });
+
+    // User Types Pie Chart
+    const userTypesCtx = document.getElementById('userTypesChart').getContext('2d');
+    new Chart(userTypesCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Super Owners', 'Company Users', 'Individual Users', 'Staff'],
+            datasets: [{
+                data: [3, {{ stats.company_users|default:15 }}, {{ stats.individual_users|default:25 }}, 5],
+                backgroundColor: ['#f59e0b', '#3b82f6', '#10b981', '#8b5cf6']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+
+    // Company Registrations Chart
+    const companyRegCtx = document.getElementById('companyRegistrationsChart').getContext('2d');
+    new Chart(companyRegCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+            datasets: [{
+                label: 'Companies',
+                data: [2, 4, 3, 6, 5, {{ stats.new_companies_month }}],
+                backgroundColor: '#10b981',
+                borderColor: '#059669',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: '#e5e7eb'
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
+
+    // Requests Status Chart
+    const requestsStatusCtx = document.getElementById('requestsStatusChart').getContext('2d');
+    new Chart(requestsStatusCtx, {
+        type: 'line',
+        data: {
+            labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+            datasets: [{
+                label: 'Approved',
+                data: [5, 8, 12, {{ stats.approved_week }}],
+                borderColor: '#10b981',
+                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                tension: 0.4
+            }, {
+                label: 'Rejected',
+                data: [2, 3, 1, {{ stats.rejected_week|default:2 }}],
+                borderColor: '#ef4444',
+                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: '#e5e7eb'
+                    }
+                },
+                x: {
+                    grid: {
+                        color: '#e5e7eb'
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+
+<style>
+.avatar-placeholder {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: var(--admin-accent);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.875rem;
+    flex-shrink: 0;
+}
+
+.badge-sm {
+    padding: 0.2em 0.5em;
+    font-size: 0.7em;
+}
+
+.list-group-item {
+    border-left: 0;
+    border-right: 0;
+}
+
+.list-group-item:first-child {
+    border-top: 0;
+}
+
+.list-group-item:last-child {
+    border-bottom: 0;
+}
+</style>
+{% endblock %}

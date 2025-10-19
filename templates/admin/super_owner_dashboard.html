@@ -1,0 +1,225 @@
+{% extends 'base.html' %}
+
+{% block title %}Super Owner Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-crown"></i> Super Owner Dashboard</h2>
+                <div>
+                    <span class="badge bg-warning fs-6 me-2">{{ request.user.super_owner_profile.get_delegation_level_display }}</span>
+                    <a href="{% url 'admin:index' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-cogs"></i> Django Admin
+                    </a>
+                </div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body text-center">
+                            <i class="fas fa-clock fa-2x mb-2"></i>
+                            <h4>{{ pending_requests }}</h4>
+                            <p>Pending Requests</p>
+                        </div>
+                        <div class="card-footer">
+                            <a href="{% url 'core:activation_requests_list' %}?status=pending" class="text-white">
+                                <i class="fas fa-arrow-right"></i> View Details
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body text-center">
+                            <i class="fas fa-search fa-2x mb-2"></i>
+                            <h4>{{ under_review_requests }}</h4>
+                            <p>Under Review</p>
+                        </div>
+                        <div class="card-footer">
+                            <a href="{% url 'core:activation_requests_list' %}?status=under_review" class="text-white">
+                                <i class="fas fa-arrow-right"></i> View Details
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body text-center">
+                            <i class="fas fa-check fa-2x mb-2"></i>
+                            <h4>{{ approved_today }}</h4>
+                            <p>Approved Today</p>
+                        </div>
+                        <div class="card-footer">
+                            <a href="{% url 'core:activation_requests_list' %}?status=approved" class="text-white">
+                                <i class="fas fa-arrow-right"></i> View Details
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-3">
+                    <div class="card bg-secondary text-white">
+                        <div class="card-body text-center">
+                            <i class="fas fa-building fa-2x mb-2"></i>
+                            <h4>{{ total_companies }}</h4>
+                            <p>Active Companies</p>
+                        </div>
+                        <div class="card-footer">
+                            <a href="{% url 'admin:core_company_changelist' %}" class="text-white">
+                                <i class="fas fa-arrow-right"></i> View Details
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-history"></i> Recent Registration Requests</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if recent_requests %}
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>Date</th>
+                                                <th>Type</th>
+                                                <th>Name</th>
+                                                <th>Email</th>
+                                                <th>Status</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for request in recent_requests %}
+                                                <tr>
+                                                    <td>{{ request.created_at|date:"M d" }}</td>
+                                                    <td>
+                                                        <span class="badge {% if request.request_type == 'company_registration' %}bg-primary{% else %}bg-info{% endif %}">
+                                                            {{ request.get_request_type_display }}
+                                                        </span>
+                                                    </td>
+                                                    <td>{{ request.first_name }} {{ request.last_name }}</td>
+                                                    <td>{{ request.email }}</td>
+                                                    <td>
+                                                        <span class="badge 
+                                                            {% if request.status == 'approved' %}bg-success
+                                                            {% elif request.status == 'rejected' %}bg-danger
+                                                            {% elif request.status == 'under_review' %}bg-warning
+                                                            {% else %}bg-secondary{% endif %}">
+                                                            {{ request.get_status_display }}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <a href="{% url 'core:activation_request_detail' request.id %}" 
+                                                           class="btn btn-sm btn-outline-primary">
+                                                            <i class="fas fa-eye"></i>
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="mt-3">
+                                    <a href="{% url 'core:activation_requests_list' %}" class="btn btn-outline-primary">
+                                        <i class="fas fa-list"></i> View All Requests
+                                    </a>
+                                </div>
+                            {% else %}
+                                <div class="text-center py-4">
+                                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                                    <h6>No recent requests</h6>
+                                    <p class="text-muted">Registration requests will appear here when submitted.</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-bolt"></i> Quick Actions</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-grid gap-2">
+                                <a href="{% url 'core:activation_requests_list' %}" class="btn btn-primary">
+                                    <i class="fas fa-clipboard-list"></i> Review Registrations
+                                </a>
+                                
+                                <a href="{% url 'admin:core_company_changelist' %}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-building"></i> Manage Companies
+                                </a>
+                                
+                                <a href="{% url 'admin:core_superowner_changelist' %}" class="btn btn-outline-warning">
+                                    <i class="fas fa-crown"></i> Manage Super Owners
+                                </a>
+                                
+                                <a href="{% url 'admin:auth_user_changelist' %}" class="btn btn-outline-info">
+                                    <i class="fas fa-users"></i> View All Users
+                                </a>
+                                
+                                <a href="{% url 'admin:index' %}" class="btn btn-outline-dark">
+                                    <i class="fas fa-cogs"></i> Full Django Admin
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- System Information -->
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h5><i class="fas fa-info-circle"></i> Your Permissions</h5>
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-unstyled">
+                                {% if request.user.super_owner_profile.can_activate_accounts %}
+                                    <li><i class="fas fa-check text-success"></i> Activate Accounts</li>
+                                {% endif %}
+                                {% if request.user.super_owner_profile.can_manage_companies %}
+                                    <li><i class="fas fa-check text-success"></i> Manage Companies</li>
+                                {% endif %}
+                                {% if request.user.super_owner_profile.can_manage_users %}
+                                    <li><i class="fas fa-check text-success"></i> Manage Users</li>
+                                {% endif %}
+                                {% if request.user.super_owner_profile.can_access_django_admin %}
+                                    <li><i class="fas fa-check text-success"></i> Django Admin Access</li>
+                                {% endif %}
+                                {% if request.user.super_owner_profile.can_delegate_permissions %}
+                                    <li><i class="fas fa-check text-success"></i> Delegate Permissions</li>
+                                {% endif %}
+                                {% if request.user.super_owner_profile.can_manage_billing %}
+                                    <li><i class="fas fa-check text-success"></i> Manage Billing</li>
+                                {% endif %}
+                                {% if request.user.super_owner_profile.can_view_system_analytics %}
+                                    <li><i class="fas fa-check text-success"></i> System Analytics</li>
+                                {% endif %}
+                            </ul>
+                            
+                            {% if request.user.super_owner_profile.is_primary_owner %}
+                                <div class="alert alert-warning mt-3">
+                                    <i class="fas fa-crown"></i>
+                                    <strong>Primary Owner</strong><br>
+                                    <small>You have full system access and cannot be revoked.</small>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

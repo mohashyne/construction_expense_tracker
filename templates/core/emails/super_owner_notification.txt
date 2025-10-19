@@ -1,0 +1,20 @@
+New Registration Request - Action Required
+
+A new registration request requires your review and approval.
+
+Request Details:
+- Type: {{ activation_request.get_request_type_display }}
+- Applicant: {{ activation_request.first_name }} {{ activation_request.last_name }}
+- Email: {{ activation_request.email }}
+{% if activation_request.company_name %}- Company: {{ activation_request.company_name }}
+{% endif %}- Submitted: {{ activation_request.created_at|date:"F j, Y \a\t g:i A" }}
+- Status: {{ activation_request.get_status_display }}
+
+Please review this request and take appropriate action by visiting:
+{{ admin_url }}
+
+You can approve, reject, or request additional documentation from the applicant.
+
+---
+Construction Tracker Admin Notification
+This email was sent to all Super Owners with activation permissions.

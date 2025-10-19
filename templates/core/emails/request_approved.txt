@@ -1,0 +1,7 @@
+Account Approved
+
+Dear {{ activation_request.first_name }},
+
+Your registration request has been approved! You can now login to your account.
+
+Login URL: {{ login_url }}

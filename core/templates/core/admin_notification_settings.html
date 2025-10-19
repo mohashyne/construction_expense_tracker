@@ -1,0 +1,269 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+    Notification Settings - {{ company.name }}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .notification-template {
+        border: 1px solid #e0e6ed;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        background: #fff;
+        transition: box-shadow 0.3s ease;
+    }
+    .notification-template:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    .control-badge {
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+    }
+    .control-admin-only { 
+        background-color: #dc3545; 
+        color: white; 
+    }
+    .control-admin-default { 
+        background-color: #fd7e14; 
+        color: white; 
+    }
+    .control-user-choice { 
+        background-color: #28a745; 
+        color: white; 
+    }
+    .control-role-based { 
+        background-color: #6f42c1; 
+        color: white; 
+    }
+    .template-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+        border-bottom: 1px solid #e0e6ed;
+        padding-bottom: 0.75rem;
+    }
+    .template-settings {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+    .settings-group {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 6px;
+    }
+    .settings-group h6 {
+        color: #495057;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+    }
+    .form-check {
+        margin-bottom: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="row align-items-center">
+        <div class="col">
+            <div class="page-pretitle">Administration</div>
+            <h2 class="page-title">Notification Settings</h2>
+            <p class="text-muted">Configure notification templates and default settings for your company</p>
+        </div>
+        <div class="col-auto ms-auto d-print-none">
+            <div class="btn-list">
+                <a href="{% url 'core:notification_preferences' %}" class="btn btn-ghost-secondary">
+                    <i class="ti ti-user-cog me-1"></i>
+                    User Preferences
+                </a>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTemplateModal">
+                    <i class="ti ti-plus me-1"></i>
+                    Add Template
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row row-deck row-cards">
+    <div class="col-12">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible" role="alert">
+                    <div class="d-flex">
+                        <div>
+                            {% if message.tags == 'success' %}
+                                <i class="ti ti-check alert-icon"></i>
+                            {% elif message.tags == 'error' %}
+                                <i class="ti ti-alert-circle alert-icon"></i>
+                            {% endif %}
+                        </div>
+                        <div>
+                            {{ message }}
+                        </div>
+                    </div>
+                    <a class="btn-close" data-bs-dismiss="alert" aria-label="close"></a>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        {% if not templates %}
+            <div class="empty">
+                <div class="empty-img">
+                    <img src="{% static 'dashboard/static/illustrations/undraw_settings.svg' %}" height="128" alt="">
+                </div>
+                <p class="empty-title">No notification templates configured</p>
+                <p class="empty-subtitle text-muted">
+                    Set up notification templates to control how and when users receive notifications.
+                </p>
+                <div class="empty-action">
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTemplateModal">
+                        <i class="ti ti-plus"></i>
+                        Add Your First Template
+                    </button>
+                </div>
+            </div>
+        {% else %}
+            {% for template in templates %}
+                <div class="notification-template">
+                    <div class="template-header">
+                        <div>
+                            <h4 class="mb-1">{{ template.name }}</h4>
+                            <p class="text-muted mb-0">{{ template.description }}</p>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <span class="control-badge control-{{ template.control_level|slugify }}">
+                                {% if template.control_level == 'admin_only' %}
+                                    Admin Only
+                                {% elif template.control_level == 'admin_default' %}
+                                    Admin Default
+                                {% elif template.control_level == 'user_choice' %}
+                                    User Choice
+                                {% else %}
+                                    Role Based
+                                {% endif %}
+                            </span>
+                            <div class="ms-2">
+                                {% if template.is_active %}
+                                    <span class="badge bg-success-subtle text-success">Active</span>
+                                {% else %}
+                                    <span class="badge bg-danger-subtle text-danger">Inactive</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <form method="post" action="{% url 'core:admin_notification_settings' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="template_id" value="{{ template.id }}">
+                        
+                        <div class="template-settings">
+                            <div class="settings-group">
+                                <h6>Control & Priority</h6>
+                                <div class="mb-3">
+                                    <label class="form-label">Control Level</label>
+                                    <select class="form-select" name="control_level">
+                                        <option value="admin_only" {% if template.control_level == 'admin_only' %}selected{% endif %}>
+                                            Admin Only - Users cannot modify
+                                        </option>
+                                        <option value="admin_default" {% if template.control_level == 'admin_default' %}selected{% endif %}>
+                                            Admin Default - Users can override
+                                        </option>
+                                        <option value="user_choice" {% if template.control_level == 'user_choice' %}selected{% endif %}>
+                                            User Choice - Users control entirely
+                                        </option>
+                                        <option value="role_based" {% if template.control_level == 'role_based' %}selected{% endif %}>
+                                            Role Based - Based on user role
+                                        </option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Default Priority</label>
+                                    <select class="form-select" name="default_priority">
+                                        <option value="low" {% if template.default_priority == 'low' %}selected{% endif %}>Low</option>
+                                        <option value="medium" {% if template.default_priority == 'medium' %}selected{% endif %}>Medium</option>
+                                        <option value="high" {% if template.default_priority == 'high' %}selected{% endif %}>High</option>
+                                        <option value="urgent" {% if template.default_priority == 'urgent' %}selected{% endif %}>Urgent</option>
+                                    </select>
+                                </div>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" name="is_active" 
+                                           {% if template.is_active %}checked{% endif %}>
+                                    <label class="form-check-label">Template Active</label>
+                                </div>
+                            </div>
+                            
+                            <div class="settings-group">
+                                <h6>Default Delivery Methods</h6>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" name="default_in_app" 
+                                           {% if template.default_in_app %}checked{% endif %}>
+                                    <label class="form-check-label">
+                                        <i class="ti ti-bell me-1"></i>
+                                        In-App Notifications
+                                    </label>
+                                </div>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" name="default_email" 
+                                           {% if template.default_email %}checked{% endif %}>
+                                    <label class="form-check-label">
+                                        <i class="ti ti-mail me-1"></i>
+                                        Email Notifications
+                                    </label>
+                                </div>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" name="default_sms" 
+                                           {% if template.default_sms %}checked{% endif %}>
+                                    <label class="form-check-label">
+                                        <i class="ti ti-phone me-1"></i>
+                                        SMS Notifications
+                                    </label>
+                                </div>
+                                <div class="mt-3">
+                                    <button type="submit" class="btn btn-primary btn-sm">
+                                        <i class="ti ti-device-floppy me-1"></i>
+                                        Save Changes
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+</div>
+
+<!-- Add Template Modal -->
+<div class="modal modal-blur fade" id="addTemplateModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add Notification Template</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="ti ti-info-circle me-2"></i>
+                    New notification templates can be created using the Django management command: 
+                    <code>python manage.py create_default_notifications</code>
+                </div>
+                <p class="text-muted">
+                    This will create default notification templates for your company based on common notification types like project updates, expense approvals, and system alerts.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

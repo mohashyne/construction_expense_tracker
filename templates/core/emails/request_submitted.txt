@@ -1,0 +1,25 @@
+Registration Request Submitted - Construction Tracker
+
+Dear {{ activation_request.first_name }} {{ activation_request.last_name }},
+
+Thank you for submitting your registration request to Construction Tracker.
+
+Request Details:
+- Type: {{ activation_request.get_request_type_display }}
+- Email: {{ activation_request.email }}
+{% if activation_request.company_name %}- Company: {{ activation_request.company_name }}
+{% endif %}- Submitted: {{ activation_request.created_at|date:"F j, Y \a\t g:i A" }}
+- Request ID: {{ activation_request.id }}
+
+Your request is currently under review by our administrators. You will receive an email notification once your request has been processed.
+
+You can check the status of your request at any time by visiting:
+{{ status_url }}
+
+If you have any questions, please don't hesitate to contact our support team.
+
+Thank you for choosing Construction Tracker!
+
+---
+This is an automated message from Construction Tracker.
+Please do not reply to this email.

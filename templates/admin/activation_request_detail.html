@@ -1,0 +1,269 @@
+{% extends 'base.html' %}
+
+{% block title %}Review Registration Request - Super Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-user-check"></i> Review Registration Request</h2>
+                <div>
+                    <a href="{% url 'core:activation_requests_list' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to List
+                    </a>
+                    <a href="{% url 'admin:index' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-cogs"></i> Django Admin
+                    </a>
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- Request Information -->
+                <div class="col-md-8">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5><i class="fas fa-info-circle"></i> Request Information</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <strong>Request Type:</strong><br>
+                                    <span class="badge {% if activation_request.request_type == 'company_registration' %}bg-primary{% else %}bg-info{% endif %} fs-6">
+                                        {% if activation_request.request_type == 'company_registration' %}
+                                            <i class="fas fa-building"></i>
+                                        {% else %}
+                                            <i class="fas fa-user"></i>
+                                        {% endif %}
+                                        {{ activation_request.get_request_type_display }}
+                                    </span>
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>Current Status:</strong><br>
+                                    <span class="badge 
+                                        {% if activation_request.status == 'approved' %}bg-success
+                                        {% elif activation_request.status == 'rejected' %}bg-danger
+                                        {% elif activation_request.status == 'under_review' %}bg-warning
+                                        {% elif activation_request.status == 'documents_required' %}bg-warning
+                                        {% else %}bg-secondary{% endif %} fs-6">
+                                        {{ activation_request.get_status_display }}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <strong>Name:</strong><br>
+                                    {{ activation_request.first_name }} {{ activation_request.last_name }}
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>Email:</strong><br>
+                                    <a href="mailto:{{ activation_request.email }}">{{ activation_request.email }}</a>
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <strong>Username:</strong><br>
+                                    {{ activation_request.username }}
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>Phone:</strong><br>
+                                    {{ activation_request.phone|default:"Not provided" }}
+                                </div>
+                            </div>
+
+                            {% if activation_request.company_name %}
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <strong>Company Name:</strong><br>
+                                    {{ activation_request.company_name }}
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>Registration Number:</strong><br>
+                                    {{ activation_request.company_registration_number|default:"Not provided" }}
+                                </div>
+                            </div>
+
+                            {% if activation_request.company_description %}
+                            <div class="row mb-3">
+                                <div class="col-12">
+                                    <strong>Company Description:</strong><br>
+                                    <p class="text-muted">{{ activation_request.company_description }}</p>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            {% if activation_request.company_address %}
+                            <div class="row mb-3">
+                                <div class="col-12">
+                                    <strong>Company Address:</strong><br>
+                                    <p class="text-muted">{{ activation_request.company_address }}</p>
+                                </div>
+                            </div>
+                            {% endif %}
+                            {% endif %}
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <strong>Submitted:</strong><br>
+                                    {{ activation_request.created_at|date:"M d, Y g:i A" }}
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>Expires:</strong><br>
+                                    {{ activation_request.expires_at|date:"M d, Y g:i A" }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Documents -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5><i class="fas fa-file-upload"></i> Uploaded Documents</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if documents %}
+                                <div class="row">
+                                    {% for document in documents %}
+                                        <div class="col-md-6 mb-3">
+                                            <div class="card">
+                                                <div class="card-body">
+                                                    <div class="d-flex justify-content-between align-items-start">
+                                                        <div>
+                                                            <h6>{{ document.get_document_type_display }}</h6>
+                                                            <small class="text-muted">{{ document.original_filename }}</small><br>
+                                                            <small class="text-muted">{{ document.file_size_mb }} MB</small>
+                                                        </div>
+                                                        <span class="badge 
+                                                            {% if document.status == 'approved' %}bg-success
+                                                            {% elif document.status == 'rejected' %}bg-danger
+                                                            {% elif document.status == 'requires_revision' %}bg-warning
+                                                            {% else %}bg-secondary{% endif %}">
+                                                            {{ document.get_status_display }}
+                                                        </span>
+                                                    </div>
+                                                    
+                                                    <div class="mt-3">
+                                                        <a href="{% url 'core:serve_document' document.id %}" 
+                                                           class="btn btn-sm btn-outline-primary" target="_blank">
+                                                            <i class="fas fa-download"></i> View/Download
+                                                        </a>
+                                                        <a href="{% url 'core:document_review' document.id %}" 
+                                                           class="btn btn-sm btn-outline-secondary">
+                                                            <i class="fas fa-edit"></i> Review
+                                                        </a>
+                                                    </div>
+
+                                                    {% if document.review_notes %}
+                                                    <div class="mt-2">
+                                                        <small><strong>Review Notes:</strong></small>
+                                                        <small class="text-muted d-block">{{ document.review_notes }}</small>
+                                                    </div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <div class="text-center py-3">
+                                    <i class="fas fa-file-slash fa-2x text-muted mb-2"></i>
+                                    <p class="text-muted">No documents uploaded</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Panel -->
+                <div class="col-md-4">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5><i class="fas fa-tasks"></i> Actions</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if activation_request.status in 'pending,under_review,documents_required' %}
+                                <form method="post">
+                                    {% csrf_token %}
+                                    
+                                    <div class="mb-3">
+                                        <label for="notes" class="form-label">Notes/Reason</label>
+                                        <textarea name="notes" id="notes" class="form-control" rows="3" 
+                                                  placeholder="Add notes for this action..."></textarea>
+                                    </div>
+
+                                    <div class="d-grid gap-2">
+                                        {% if activation_request.status == 'pending' %}
+                                            <button type="submit" name="action" value="mark_review" 
+                                                    class="btn btn-info">
+                                                <i class="fas fa-search"></i> Mark Under Review
+                                            </button>
+                                        {% endif %}
+
+                                        <button type="submit" name="action" value="approve" 
+                                                class="btn btn-success"
+                                                onclick="return confirm('Are you sure you want to approve this registration? This will create user accounts and send credentials.')">
+                                            <i class="fas fa-check"></i> Approve Registration
+                                        </button>
+
+                                        <button type="submit" name="action" value="require_documents" 
+                                                class="btn btn-warning">
+                                            <i class="fas fa-exclamation-triangle"></i> Request More Documents
+                                        </button>
+
+                                        <button type="submit" name="action" value="reject" 
+                                                class="btn btn-danger"
+                                                onclick="return confirm('Are you sure you want to reject this registration? This action cannot be undone.')">
+                                            <i class="fas fa-times"></i> Reject Registration
+                                        </button>
+                                    </div>
+                                </form>
+                            {% else %}
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle"></i>
+                                    This request has already been {{ activation_request.get_status_display|lower }}.
+                                    
+                                    {% if activation_request.approved_by %}
+                                        <br><br>
+                                        <strong>{{ activation_request.get_status_display }} by:</strong><br>
+                                        {{ activation_request.approved_by.get_full_name|default:activation_request.approved_by.username }}<br>
+                                        <small class="text-muted">{{ activation_request.approved_at|date:"M d, Y g:i A" }}</small>
+                                    {% endif %}
+
+                                    {% if activation_request.rejection_reason %}
+                                        <br><br>
+                                        <strong>Reason:</strong><br>
+                                        {{ activation_request.rejection_reason }}
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Contact Information -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-envelope"></i> Contact</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-2">
+                                <a href="mailto:{{ activation_request.email }}" class="btn btn-outline-primary btn-sm w-100">
+                                    <i class="fas fa-envelope"></i> Send Email
+                                </a>
+                            </div>
+                            {% if activation_request.phone %}
+                            <div>
+                                <a href="tel:{{ activation_request.phone }}" class="btn btn-outline-success btn-sm w-100">
+                                    <i class="fas fa-phone"></i> Call {{ activation_request.phone }}
+                                </a>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

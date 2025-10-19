@@ -1,0 +1,8 @@
+Documents Required
+
+Dear {{ activation_request.first_name }},
+
+Additional documents are required for your registration.
+Message: {{ message }}
+
+Upload URL: {{ status_url }}

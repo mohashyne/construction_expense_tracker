@@ -1,0 +1,434 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - ConstructPro{% endblock %}
+
+{% block page_title %}Dashboard{% endblock %}
+{% block page_subtitle %}Overview of your construction projects and expenses{% endblock %}
+
+{% block content %}
+<!-- Page header -->
+<div class="d-flex justify-between align-center mb-4">
+    <div>
+        <h2>Project Overview</h2>
+        <p class="text-muted">Monitor your construction business performance</p>
+    </div>
+    <div class="d-flex gap-2">
+        <button type="button" class="btn btn-outline-primary">
+            <i class="fas fa-download"></i>
+            Export
+        </button>
+        <a href="{% url 'projects:create' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i>
+            New Project
+        </a>
+    </div>
+</div>
+
+<!-- KPI Cards -->
+<div class="row mb-4">
+    <div class="col col-3">
+        <div class="card">
+            <div class="card-stat">
+                <div class="card-stat-icon" style="background: #dcfce7; color: #16a34a;">
+                    <i class="fas fa-building"></i>
+                </div>
+                <div class="card-stat-value text-primary">{{ total_projects|default:"0" }}</div>
+                <div class="card-stat-label">Total Projects</div>
+            </div>
+            <div class="card-footer">
+                <a href="{% url 'projects:list' %}" class="text-primary fw-medium">
+                    View all projects
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col col-3">
+        <div class="card">
+            <div class="card-stat">
+                <div class="card-stat-icon" style="background: var(--accent-100); color: var(--accent-600);">
+                    <i class="fas fa-play"></i>
+                </div>
+                <div class="card-stat-value text-success">{{ active_projects|default:"0" }}</div>
+                <div class="card-stat-label">Active Projects</div>
+            </div>
+            <div class="card-footer">
+                <span class="text-success fw-medium">{{ active_projects|default:"0" }} in progress</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col col-3">
+        <div class="card">
+            <div class="card-stat">
+                <div class="card-stat-icon" style="background: var(--yellow-100); color: var(--yellow-600);">
+                    <i class="fas fa-coins"></i>
+                </div>
+                <div class="card-stat-value text-warning"><span class="currency-symbol">₦</span><span class="currency-value" data-usd="{{ total_budget|floatformat:0|default:"0" }}" data-ngn="{{ total_budget|floatformat:0|default:"0" }}">{{ total_budget|floatformat:0|default:"0" }}</span></div>
+                <div class="card-stat-label">Total Budget</div>
+            </div>
+            <div class="card-footer">
+                <span class="text-muted fw-medium">Allocated across all projects</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col col-3">
+        <div class="card">
+            <div class="card-stat">
+                <div class="card-stat-icon" style="background: {% if budget_variance >= 0 %}var(--accent-100){% else %}var(--red-100){% endif %}; color: {% if budget_variance >= 0 %}var(--accent-600){% else %}var(--red-600){% endif %};">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="card-stat-value {% if budget_variance >= 0 %}text-success{% else %}text-danger{% endif %}">
+                    <span class="currency-symbol">₦</span><span class="currency-value" data-usd="{{ budget_variance|floatformat:0|default:"0" }}" data-ngn="{{ budget_variance|floatformat:0|default:"0" }}">{{ budget_variance|floatformat:0|default:"0" }}</span>
+                </div>
+                <div class="card-stat-label">Budget Variance</div>
+            </div>
+            <div class="card-footer">
+                <span class="fw-medium {% if budget_variance >= 0 %}text-success{% else %}text-danger{% endif %}">
+                    {% if budget_variance >= 0 %}Under budget{% else %}Over budget{% endif %}
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Secondary Statistics -->
+<div class="row mb-4">
+    <div class="col col-3">
+        <div class="card">
+            <div class="card-body d-flex align-center gap-3">
+                <div class="d-flex align-center justify-center" style="width: 3rem; height: 3rem; background: var(--accent-100); color: var(--accent-600); border-radius: 50%;">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div>
+                    <div class="fw-bold" style="font-size: 1.5rem; color: var(--accent-600);">{{ completed_projects|default:"0" }}</div>
+                    <div class="text-muted fw-medium">Completed</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col col-3">
+        <div class="card">
+            <div class="card-body d-flex align-center gap-3">
+                <div class="d-flex align-center justify-center" style="width: 3rem; height: 3rem; background: var(--red-100); color: var(--red-600); border-radius: 50%;">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div>
+                    <div class="fw-bold" style="font-size: 1.5rem; color: var(--red-600);">{{ overdue_projects|default:"0" }}</div>
+                    <div class="text-muted fw-medium">Overdue</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col col-3">
+        <div class="card">
+            <div class="card-body d-flex align-center gap-3">
+                <div class="d-flex align-center justify-center" style="width: 3rem; height: 3rem; background: #dcfce7; color: #16a34a; border-radius: 50%;">
+                    <i class="fas fa-receipt"></i>
+                </div>
+                <div>
+                    <div class="fw-bold" style="font-size: 1.5rem; color: #16a34a;"><span class="currency-symbol">₦</span><span class="currency-value" data-usd="{{ total_expenses|floatformat:0|default:"0" }}" data-ngn="{{ total_expenses|floatformat:0|default:"0" }}">{{ total_expenses|floatformat:0|default:"0" }}</span></div>
+                    <div class="text-muted fw-medium">Total Expenses</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col col-3">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex align-center gap-3 mb-2">
+                    <div class="d-flex align-center justify-center" style="width: 3rem; height: 3rem; background: {% if budget_utilization > 90 %}var(--red-100){% elif budget_utilization > 75 %}var(--yellow-100){% else %}var(--accent-100){% endif %}; color: {% if budget_utilization > 90 %}var(--red-600){% elif budget_utilization > 75 %}var(--yellow-600){% else %}var(--accent-600){% endif %}; border-radius: 50%;">
+                        <i class="fas fa-chart-pie"></i>
+                    </div>
+                    <div>
+                        <div class="fw-bold" style="font-size: 1.5rem; color: {% if budget_utilization > 90 %}var(--red-600){% elif budget_utilization > 75 %}var(--yellow-600){% else %}var(--accent-600){% endif %};">{{ budget_utilization|default:"0" }}%</div>
+                        <div class="text-muted fw-medium">Budget Usage</div>
+                    </div>
+                </div>
+                <div class="progress">
+                    <div class="progress-bar" style="width: {{ budget_utilization|default:"0" }}%; background: {% if budget_utilization > 90 %}var(--red-600){% elif budget_utilization > 75 %}var(--yellow-600){% else %}var(--accent-600){% endif %};"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Section -->
+<div class="mt-8">
+    <div class="grid grid-cols-1 gap-5 lg:grid-cols-3">
+        <!-- Monthly Expense Chart -->
+        <div class="lg:col-span-2">
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="px-4 py-5 sm:p-6">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-medium text-gray-900">Monthly Expense Trend</h3>
+                        <div class="flex space-x-2">
+                            <button class="text-sm text-gray-500 hover:text-gray-700">6M</button>
+                            <button class="text-sm text-green-600 font-medium">1Y</button>
+                        </div>
+                    </div>
+                    <div class="mt-6">
+                        <canvas id="monthlyExpenseChart" height="300"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Project Status Chart -->
+        <div>
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="px-4 py-5 sm:p-6">
+                    <h3 class="text-lg font-medium text-gray-900">Projects by Status</h3>
+                    <div class="mt-6">
+                        <canvas id="projectStatusChart" height="300"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity -->
+<div class="mt-8">
+    <div class="grid grid-cols-1 gap-5 lg:grid-cols-2">
+        <!-- Recent Projects -->
+        <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+            <div class="px-4 py-5 sm:px-6 flex items-center justify-between">
+                <div>
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">Recent Projects</h3>
+                    <p class="mt-1 max-w-2xl text-sm text-gray-500">Latest project updates and status changes</p>
+                </div>
+                <a href="{% url 'projects:list' %}" class="text-sm font-medium text-green-600 hover:text-green-500">
+                    View all <span aria-hidden="true">&rarr;</span>
+                </a>
+            </div>
+            <div class="border-t border-gray-200">
+                <ul role="list" class="divide-y divide-gray-200">
+                    {% for project in recent_projects %}
+                    <li class="px-4 py-4 hover:bg-gray-50">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0">
+                                    <div class="h-8 w-8 rounded-full {% if project.status == 'completed' %}bg-green-100{% elif project.status == 'in_progress' %}bg-green-100{% elif project.status == 'on_hold' %}bg-yellow-100{% else %}bg-gray-100{% endif %} flex items-center justify-center">
+                                        <i class="fas fa-building text-sm {% if project.status == 'completed' %}text-green-600{% elif project.status == 'in_progress' %}text-green-600{% elif project.status == 'on_hold' %}text-yellow-600{% else %}text-gray-600{% endif %}"></i>
+                                    </div>
+                                </div>
+                                <div class="ml-4">
+                                    <div class="text-sm font-medium text-gray-900">{{ project.name }}</div>
+                                    <div class="text-sm text-gray-500">{{ project.location|default:"No location" }}</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                    {% if project.status == 'completed' %}bg-green-100 text-green-800
+                                    {% elif project.status == 'in_progress' %}bg-green-100 text-green-800
+                                    {% elif project.status == 'on_hold' %}bg-yellow-100 text-yellow-800
+                                    {% elif project.status == 'cancelled' %}bg-red-100 text-red-800
+                                    {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                    {{ project.get_status_display }}
+                                </span>
+                                <div class="ml-2 text-sm text-gray-500">₦{{ project.total_budget|floatformat:0 }}</div>
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <div class="w-full bg-gray-200 rounded-full h-1.5">
+                                <div class="bg-green-600 h-1.5 rounded-full transition-all duration-300" style="width: {{ project.progress_percentage }}%"></div>
+                            </div>
+                            <div class="mt-1 text-xs text-gray-500">{{ project.progress_percentage }}% complete</div>
+                        </div>
+                    </li>
+                    {% empty %}
+                    <li class="px-4 py-8 text-center">
+                        <i class="fas fa-folder-open text-gray-400 text-3xl mb-4"></i>
+                        <p class="text-gray-500">No projects yet</p>
+                        <a href="{% url 'projects:create' %}" class="mt-2 text-green-600 hover:text-green-500 font-medium">Create your first project</a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <!-- Recent Expenses -->
+        <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+            <div class="px-4 py-5 sm:px-6 flex items-center justify-between">
+                <div>
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">Recent Expenses</h3>
+                    <p class="mt-1 max-w-2xl text-sm text-gray-500">Latest expense entries and payments</p>
+                </div>
+                <a href="{% url 'expenses:list' %}" class="text-sm font-medium text-green-600 hover:text-green-500">
+                    View all <span aria-hidden="true">&rarr;</span>
+                </a>
+            </div>
+            <div class="border-t border-gray-200">
+                <ul role="list" class="divide-y divide-gray-200">
+                    {% for expense in recent_expenses %}
+                    <li class="px-4 py-4 hover:bg-gray-50">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0">
+                                    <div class="h-8 w-8 rounded-full {% if expense.status == 'paid' %}bg-green-100{% elif expense.status == 'approved' %}bg-green-100{% elif expense.status == 'overdue' %}bg-red-100{% else %}bg-gray-100{% endif %} flex items-center justify-center">
+                                        <i class="fas fa-receipt text-sm {% if expense.status == 'paid' %}text-green-600{% elif expense.status == 'approved' %}text-green-600{% elif expense.status == 'overdue' %}text-red-600{% else %}text-gray-600{% endif %}"></i>
+                                    </div>
+                                </div>
+                                <div class="ml-4">
+                                    <div class="text-sm font-medium text-gray-900">{{ expense.name }}</div>
+                                    <div class="text-sm text-gray-500">{{ expense.project.name|truncatechars:20 }}</div>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-sm font-medium text-gray-900">₦{{ expense.actual_cost|floatformat:2 }}</div>
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                    {% if expense.status == 'paid' %}bg-green-100 text-green-800
+                                    {% elif expense.status == 'approved' %}bg-green-100 text-green-800
+                                    {% elif expense.status == 'overdue' %}bg-red-100 text-red-800
+                                    {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                    {{ expense.get_status_display }}
+                                </span>
+                            </div>
+                        </div>
+                    </li>
+                    {% empty %}
+                    <li class="px-4 py-8 text-center">
+                        <i class="fas fa-receipt text-gray-400 text-3xl mb-4"></i>
+                        <p class="text-gray-500">No expenses yet</p>
+                        <a href="{% url 'expenses:create' %}" class="mt-2 text-green-600 hover:text-green-500 font-medium">Add your first expense</a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Monthly Expense Chart
+    const monthlyCtx = document.getElementById('monthlyExpenseChart');
+    if (monthlyCtx) {
+        const monthlyData = {{ monthly_expenses|safe }};
+        
+        new Chart(monthlyCtx, {
+            type: 'line',
+            data: {
+                labels: monthlyData.map(item => item.month),
+                datasets: [{
+                    label: 'Expenses',
+                    data: monthlyData.map(item => item.total),
+                    borderColor: 'rgb(22, 163, 74)',
+                    backgroundColor: 'rgba(22, 163, 74, 0.1)',
+                    tension: 0.3,
+                    fill: true,
+                    pointBackgroundColor: 'rgb(22, 163, 74)',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 4,
+                    pointHoverRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return '₦' + value.toLocaleString();
+                            }
+                        }
+                    }
+                },
+                elements: {
+                    point: {
+                        radius: 4,
+                        hoverRadius: 6
+                    }
+                },
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                }
+            }
+        });
+    }
+    
+    // Project Status Chart
+    const statusCtx = document.getElementById('projectStatusChart');
+    if (statusCtx) {
+        const statusData = {{ projects_by_status|safe }};
+        
+        const statusColors = {
+            'planning': '#6B7280',
+            'in_progress': '#16a34a',
+            'on_hold': '#F59E0B',
+            'completed': '#10B981',
+            'cancelled': '#EF4444'
+        };
+        
+        const statusLabels = {
+            'planning': 'Planning',
+            'in_progress': 'In Progress',
+            'on_hold': 'On Hold',
+            'completed': 'Completed',
+            'cancelled': 'Cancelled'
+        };
+        
+        if (statusData.length > 0) {
+            new Chart(statusCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: statusData.map(item => statusLabels[item.status] || item.status),
+                    datasets: [{
+                        data: statusData.map(item => item.count),
+                        backgroundColor: statusData.map(item => statusColors[item.status] || '#6B7280'),
+                        borderWidth: 3,
+                        borderColor: '#fff',
+                        hoverBorderWidth: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                usePointStyle: true,
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        }
+                    },
+                    cutout: '60%'
+                }
+            });
+        } else {
+            statusCtx.getContext('2d').fillStyle = '#F3F4F6';
+            statusCtx.getContext('2d').fillRect(0, 0, statusCtx.width, statusCtx.height);
+            statusCtx.insertAdjacentHTML('afterend', '<div class="text-center py-8 text-gray-500"><i class="fas fa-chart-pie text-3xl mb-2"></i><br>No project data available</div>');
+        }
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,173 @@
+{% extends 'base.html' %}
+
+{% block title %}Registration Status{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header 
+                    {% if activation_request.status == 'approved' %}bg-success text-white
+                    {% elif activation_request.status == 'rejected' %}bg-danger text-white
+                    {% elif activation_request.status == 'under_review' %}bg-warning text-white
+                    {% else %}bg-info text-white{% endif %}">
+                    <h4 class="mb-0">
+                        <i class="fas fa-clipboard-list"></i> Registration Status
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <!-- Status Badge -->
+                    <div class="text-center mb-4">
+                        <h2>
+                            <span class="badge 
+                                {% if activation_request.status == 'approved' %}bg-success
+                                {% elif activation_request.status == 'rejected' %}bg-danger
+                                {% elif activation_request.status == 'under_review' %}bg-warning
+                                {% elif activation_request.status == 'documents_required' %}bg-warning
+                                {% else %}bg-secondary{% endif %} fs-5">
+                                {{ activation_request.get_status_display }}
+                            </span>
+                        </h2>
+                    </div>
+
+                    <!-- Request Information -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <strong>Request Type:</strong><br>
+                            {{ activation_request.get_request_type_display }}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Submitted:</strong><br>
+                            {{ activation_request.created_at|date:"M d, Y g:i A" }}
+                        </div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <strong>Name:</strong><br>
+                            {{ activation_request.first_name }} {{ activation_request.last_name }}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Email:</strong><br>
+                            {{ activation_request.email }}
+                        </div>
+                    </div>
+
+                    {% if activation_request.company_name %}
+                    <div class="row mb-4">
+                        <div class="col-md-12">
+                            <strong>Company:</strong><br>
+                            {{ activation_request.company_name }}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Status Information -->
+                    <div class="alert 
+                        {% if activation_request.status == 'approved' %}alert-success
+                        {% elif activation_request.status == 'rejected' %}alert-danger
+                        {% elif activation_request.status == 'under_review' %}alert-warning
+                        {% elif activation_request.status == 'documents_required' %}alert-warning
+                        {% else %}alert-info{% endif %}">
+                        {% if activation_request.status == 'pending' %}
+                            <i class="fas fa-clock"></i>
+                            <strong>Pending Review:</strong> Your registration request has been submitted and is awaiting review by our team. You will receive an email notification once your documents are reviewed.
+                        {% elif activation_request.status == 'under_review' %}
+                            <i class="fas fa-search"></i>
+                            <strong>Under Review:</strong> Our team is currently reviewing your registration request and uploaded documents. You will receive an email notification with the decision soon.
+                        {% elif activation_request.status == 'documents_required' %}
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <strong>Additional Documents Required:</strong> 
+                            {% if activation_request.rejection_reason %}
+                                {{ activation_request.rejection_reason }}
+                            {% else %}
+                                Please provide additional documentation as requested.
+                            {% endif %}
+                        {% elif activation_request.status == 'approved' %}
+                            <i class="fas fa-check-circle"></i>
+                            <strong>Approved!</strong> Your registration has been approved. You should receive login credentials via email shortly. Welcome to ConstructPro!
+                        {% elif activation_request.status == 'rejected' %}
+                            <i class="fas fa-times-circle"></i>
+                            <strong>Rejected:</strong> 
+                            {% if activation_request.rejection_reason %}
+                                {{ activation_request.rejection_reason }}
+                            {% else %}
+                                Your registration request has been rejected. Please contact support for more information.
+                            {% endif %}
+                        {% elif activation_request.status == 'expired' %}
+                            <i class="fas fa-hourglass-end"></i>
+                            <strong>Expired:</strong> Your registration request has expired. Please submit a new request.
+                        {% endif %}
+                    </div>
+
+                    <!-- Documents Status -->
+                    {% if documents %}
+                    <div class="mt-4">
+                        <h5>Uploaded Documents</h5>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Document Type</th>
+                                        <th>Status</th>
+                                        <th>Uploaded</th>
+                                        <th>Size</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for document in documents %}
+                                    <tr>
+                                        <td>{{ document.get_document_type_display }}</td>
+                                        <td>
+                                            <span class="badge 
+                                                {% if document.status == 'approved' %}bg-success
+                                                {% elif document.status == 'rejected' %}bg-danger
+                                                {% elif document.status == 'requires_revision' %}bg-warning
+                                                {% else %}bg-secondary{% endif %}">
+                                                {{ document.get_status_display }}
+                                            </span>
+                                        </td>
+                                        <td>{{ document.created_at|date:"M d, Y" }}</td>
+                                        <td>{{ document.file_size_mb }} MB</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Review Information -->
+                    {% if activation_request.approved_by %}
+                    <div class="mt-4">
+                        <small class="text-muted">
+                            {% if activation_request.status == 'approved' %}
+                                Approved by {{ activation_request.approved_by.get_full_name|default:activation_request.approved_by.username }} 
+                                on {{ activation_request.approved_at|date:"M d, Y g:i A" }}
+                            {% elif activation_request.status == 'rejected' %}
+                                Rejected by {{ activation_request.approved_by.get_full_name|default:activation_request.approved_by.username }} 
+                                on {{ activation_request.approved_at|date:"M d, Y g:i A" }}
+                            {% endif %}
+                        </small>
+                    </div>
+                    {% endif %}
+
+                    <!-- Actions -->
+                    <div class="text-center mt-4">
+                        {% if activation_request.status == 'approved' %}
+                            <a href="{% url 'core:login' %}" class="btn btn-primary">
+                                <i class="fas fa-sign-in-alt"></i> Go to Login
+                            </a>
+                        {% elif activation_request.status == 'expired' %}
+                            <a href="{% if activation_request.request_type == 'company_registration' %}{% url 'core:company_registration_request' %}{% else %}{% url 'core:individual_registration_request' %}{% endif %}" class="btn btn-primary">
+                                <i class="fas fa-redo"></i> Submit New Request
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

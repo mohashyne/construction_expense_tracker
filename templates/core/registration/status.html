@@ -1,0 +1,302 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Registration Status - Construction Tracker{% endblock %}
+
+{% block main_content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow">
+                <div class="card-header text-center bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-clipboard-check me-2"></i>
+                        Registration Status
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <!-- Request Overview -->
+                    <div class="text-center mb-4">
+                        {% if request.status == 'pending' %}
+                        <div class="text-warning mb-3">
+                            <i class="fas fa-clock fa-3x"></i>
+                        </div>
+                        <h5 class="text-warning">Under Review</h5>
+                        <p class="text-muted">Your registration request is currently being reviewed by our administrators.</p>
+                        
+                        {% elif request.status == 'approved' %}
+                        <div class="text-success mb-3">
+                            <i class="fas fa-check-circle fa-3x"></i>
+                        </div>
+                        <h5 class="text-success">Approved!</h5>
+                        <p class="text-muted">Your registration has been approved. Check your email for login credentials.</p>
+                        
+                        {% elif request.status == 'rejected' %}
+                        <div class="text-danger mb-3">
+                            <i class="fas fa-times-circle fa-3x"></i>
+                        </div>
+                        <h5 class="text-danger">Not Approved</h5>
+                        <p class="text-muted">Your registration request was not approved. Please contact support for more information.</p>
+                        
+                        {% elif request.status == 'documents_required' %}
+                        <div class="text-info mb-3">
+                            <i class="fas fa-file-upload fa-3x"></i>
+                        </div>
+                        <h5 class="text-info">Additional Documents Required</h5>
+                        <p class="text-muted">Please upload the requested additional documents to continue with your registration.</p>
+                        
+                        {% elif request.status == 'under_review' %}
+                        <div class="text-primary mb-3">
+                            <i class="fas fa-search fa-3x"></i>
+                        </div>
+                        <h5 class="text-primary">Under Detailed Review</h5>
+                        <p class="text-muted">Your application is being carefully reviewed. This may take a few business days.</p>
+                        
+                        {% elif request.status == 'expired' %}
+                        <div class="text-muted mb-3">
+                            <i class="fas fa-hourglass-end fa-3x"></i>
+                        </div>
+                        <h5 class="text-muted">Request Expired</h5>
+                        <p class="text-muted">This registration request has expired. Please submit a new request if you still wish to register.</p>
+                        
+                        {% else %}
+                        <div class="text-secondary mb-3">
+                            <i class="fas fa-question-circle fa-3x"></i>
+                        </div>
+                        <h5 class="text-secondary">Status Unknown</h5>
+                        <p class="text-muted">Unable to determine the current status. Please contact support.</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Request Details -->
+                    <div class="row mb-4">
+                        <div class="col-sm-6">
+                            <strong>Request Type:</strong><br>
+                            <span class="badge bg-primary">{{ request.get_request_type_display }}</span>
+                        </div>
+                        <div class="col-sm-6">
+                            <strong>Submitted:</strong><br>
+                            <span class="text-muted">{{ request.created_at|date:"F j, Y g:i A" }}</span>
+                        </div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-sm-6">
+                            <strong>Applicant:</strong><br>
+                            {{ request.first_name }} {{ request.last_name }}
+                        </div>
+                        <div class="col-sm-6">
+                            <strong>Email:</strong><br>
+                            {{ request.email }}
+                        </div>
+                    </div>
+
+                    {% if request.company_name %}
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <strong>Company:</strong><br>
+                            {{ request.company_name }}
+                            {% if request.company_registration_number %}
+                            <br><small class="text-muted">Registration: {{ request.company_registration_number }}</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Documents Section -->
+                    {% if request.documents.exists %}
+                    <div class="mb-4">
+                        <h6>Uploaded Documents:</h6>
+                        <div class="list-group">
+                            {% for document in request.documents.all %}
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <i class="fas fa-file-alt me-2"></i>
+                                    {{ document.get_document_type_display }}
+                                    <br><small class="text-muted">{{ document.original_filename }}</small>
+                                </div>
+                                <span class="badge {% if document.status == 'approved' %}bg-success{% elif document.status == 'rejected' %}bg-danger{% elif document.status == 'requires_revision' %}bg-warning{% else %}bg-secondary{% endif %}">
+                                    {{ document.get_status_display }}
+                                </span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Document Upload Section (if required) -->
+                    {% if can_upload_docs and request.status == 'documents_required' %}
+                    <div class="mb-4">
+                        <div class="alert alert-info">
+                            <h6><i class="fas fa-info-circle me-2"></i>Additional Documents Required</h6>
+                            {% if request.rejection_reason %}
+                            <p class="mb-0">{{ request.rejection_reason }}</p>
+                            {% else %}
+                            <p class="mb-0">Please upload the requested additional documents.</p>
+                            {% endif %}
+                        </div>
+                        
+                        <form method="post" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label for="document" class="form-label">Upload Document</label>
+                                <input type="file" class="form-control" id="document" name="document" 
+                                       accept=".pdf,.jpg,.jpeg,.png" required>
+                                <div class="form-text">Accepted formats: PDF, JPG, PNG (Max 10MB)</div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="document_type" class="form-label">Document Type</label>
+                                <select class="form-select" id="document_type" name="document_type" required>
+                                    <option value="">Select document type...</option>
+                                    <option value="business_registration">Business Registration Certificate</option>
+                                    <option value="tax_certificate">Tax Registration Certificate</option>
+                                    <option value="cac_certificate">CAC Certificate</option>
+                                    <option value="director_id">Director ID Document</option>
+                                    <option value="utility_bill">Utility Bill</option>
+                                    <option value="bank_statement">Bank Statement</option>
+                                    <option value="individual_id">Individual ID Document</option>
+                                    <option value="passport">Passport</option>
+                                    <option value="license">Professional License</option>
+                                    <option value="other">Other Document</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="description" class="form-label">Description (Optional)</label>
+                                <textarea class="form-control" id="description" name="description" rows="2" 
+                                          placeholder="Brief description of the document..."></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-upload me-2"></i>Upload Document
+                            </button>
+                        </form>
+                    </div>
+                    {% endif %}
+
+                    <!-- Status Timeline -->
+                    <div class="mb-4">
+                        <h6>Status History:</h6>
+                        <div class="timeline">
+                            <div class="timeline-item">
+                                <div class="timeline-marker bg-primary"></div>
+                                <div class="timeline-content">
+                                    <h6 class="timeline-title">Request Submitted</h6>
+                                    <p class="timeline-text">{{ request.created_at|date:"F j, Y g:i A" }}</p>
+                                </div>
+                            </div>
+                            
+                            {% if request.approved_at %}
+                            <div class="timeline-item">
+                                <div class="timeline-marker {% if request.status == 'approved' %}bg-success{% elif request.status == 'rejected' %}bg-danger{% else %}bg-info{% endif %}"></div>
+                                <div class="timeline-content">
+                                    <h6 class="timeline-title">{{ request.get_status_display }}</h6>
+                                    <p class="timeline-text">
+                                        {{ request.approved_at|date:"F j, Y g:i A" }}
+                                        {% if request.approved_by %}
+                                        by {{ request.approved_by.get_full_name|default:request.approved_by.username }}
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="text-center">
+                        {% if request.status == 'approved' %}
+                        <a href="{% url 'core:login' %}" class="btn btn-success">
+                            <i class="fas fa-sign-in-alt me-2"></i>Login to Your Account
+                        </a>
+                        {% elif request.status == 'rejected' or request.status == 'expired' %}
+                        <a href="{% url 'core:company_registration_request' %}" class="btn btn-primary">
+                            <i class="fas fa-redo me-2"></i>Submit New Request
+                        </a>
+                        {% endif %}
+                        
+                        <a href="{% url 'core:login' %}" class="btn btn-outline-secondary ms-2">
+                            <i class="fas fa-home me-2"></i>Back to Home
+                        </a>
+                    </div>
+
+                    <!-- Expiration Notice -->
+                    {% if not is_expired and request.expires_at %}
+                    <div class="alert alert-warning mt-4">
+                        <small>
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            This request will expire on {{ request.expires_at|date:"F j, Y g:i A" }}
+                        </small>
+                    </div>
+                    {% elif is_expired %}
+                    <div class="alert alert-danger mt-4">
+                        <small>
+                            <i class="fas fa-hourglass-end me-2"></i>
+                            This request has expired. Please submit a new registration request.
+                        </small>
+                    </div>
+                    {% endif %}
+
+                </div>
+                <div class="card-footer text-center text-muted">
+                    <small>
+                        <i class="fas fa-info-circle me-2"></i>
+                        For support or questions, please contact us at support@constructiontracker.com
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #dee2e6;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -23px;
+    top: 0;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 2px #dee2e6;
+}
+
+.timeline-content {
+    padding-left: 20px;
+}
+
+.timeline-title {
+    margin-bottom: 5px;
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.timeline-text {
+    margin-bottom: 0;
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+.badge {
+    font-size: 0.8rem;
+}
+</style>
+{% endblock %}

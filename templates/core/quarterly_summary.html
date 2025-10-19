@@ -1,0 +1,399 @@
+{% extends 'base.html' %}
+
+{% block title %}Quarterly Summary - ConstructPro{% endblock %}
+
+{% block page_title %}Quarterly Summary - Q{{ quarter }} {{ year }}{% endblock %}
+{% block page_subtitle %}Comprehensive quarterly performance overview and insights{% endblock %}
+
+{% block content %}
+<!-- Page header -->
+<div class="d-flex justify-between align-center mb-4">
+    <div>
+        <h2>Q{{ quarter }} {{ year }} Performance</h2>
+        <p class="text-muted">{{ quarter_start|date:"F j" }} - {{ quarter_end|date:"F j, Y" }}</p>
+    </div>
+    <div class="d-flex gap-2">
+        <button type="button" class="btn btn-outline-primary">
+            <i class="fas fa-download"></i>
+            Export Summary
+        </button>
+        <button type="button" class="btn btn-outline-secondary">
+            <i class="fas fa-print"></i>
+            Print Report
+        </button>
+        <select class="form-select" style="width: auto;">
+            <option value="{{ quarter }}">Q{{ quarter }} {{ year }}</option>
+            <option value="1">Q1 {{ year }}</option>
+            <option value="2">Q2 {{ year }}</option>
+            <option value="3">Q3 {{ year }}</option>
+            <option value="4">Q4 {{ year }}</option>
+        </select>
+    </div>
+</div>
+
+<!-- Key Metrics Cards -->
+<div class="row mb-4">
+    <div class="col col-4">
+        <div class="card">
+            <div class="card-stat">
+                <div class="card-stat-icon" style="background: var(--accent-100); color: var(--accent-600);">
+                    <i class="fas fa-coins"></i>
+                </div>
+                <div class="card-stat-value text-primary">
+                    <span class="currency-symbol">₦</span><span class="currency-value" data-usd="{{ quarter_expenses|default:"0" }}" data-ngn="{{ quarter_expenses|default:"0" }}">{{ quarter_expenses|floatformat:0|default:"0" }}</span>
+                </div>
+                <div class="card-stat-label">Quarterly Expenses</div>
+            </div>
+            <div class="card-footer">
+                <div class="d-flex justify-between">
+                    <span class="text-muted fw-medium">{{ quarter_start|date:"M" }} - {{ quarter_end|date:"M Y" }}</span>
+                    <span class="text-success">+12% vs last quarter</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col col-4">
+        <div class="card">
+            <div class="card-stat">
+                <div class="card-stat-icon" style="background: var(--accent-100); color: var(--accent-600);">
+                    <i class="fas fa-building"></i>
+                </div>
+                <div class="card-stat-value text-success">{{ quarter_projects|default:"0" }}</div>
+                <div class="card-stat-label">New Projects</div>
+            </div>
+            <div class="card-footer">
+                <div class="d-flex justify-between">
+                    <span class="text-muted fw-medium">Started this quarter</span>
+                    <span class="text-success">+{{ quarter_projects|default:"0" }} projects</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col col-4">
+        <div class="card">
+            <div class="card-stat">
+                <div class="card-stat-icon" style="background: var(--yellow-100); color: var(--yellow-600);">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="card-stat-value text-warning">{{ completed_projects|default:"0" }}</div>
+                <div class="card-stat-label">Completed Projects</div>
+            </div>
+            <div class="card-footer">
+                <div class="d-flex justify-between">
+                    <span class="text-muted fw-medium">Finished this quarter</span>
+                    <span class="text-success">{{ completed_projects|default:"0" }} delivered</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Performance Overview -->
+<div class="row mb-4">
+    <div class="col col-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Monthly Performance</h5>
+                <p class="text-muted mb-0">Month-over-month comparison for Q{{ quarter }}</p>
+            </div>
+            <div class="card-body">
+                <canvas id="monthlyPerformanceChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col col-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Budget vs Actual</h5>
+                <p class="text-muted mb-0">Budget utilization across projects</p>
+            </div>
+            <div class="card-body">
+                <canvas id="budgetComparisonChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Detailed Breakdown -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Quarterly Breakdown</h5>
+                <p class="text-muted mb-0">Detailed analysis of quarterly performance</p>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col col-3">
+                        <div class="text-center p-4">
+                            <div class="mb-3">
+                                <i class="fas fa-calendar-alt text-primary" style="font-size: 2rem;"></i>
+                            </div>
+                            <div class="fw-bold" style="font-size: 1.5rem;">{{ quarter_start|date:"M j" }} - {{ quarter_end|date:"M j" }}</div>
+                            <div class="text-muted">Quarter Duration</div>
+                        </div>
+                    </div>
+                    <div class="col col-3">
+                        <div class="text-center p-4">
+                            <div class="mb-3">
+                                <i class="fas fa-chart-line text-success" style="font-size: 2rem;"></i>
+                            </div>
+                            <div class="fw-bold text-success" style="font-size: 1.5rem;">+15.2%</div>
+                            <div class="text-muted">Growth Rate</div>
+                        </div>
+                    </div>
+                    <div class="col col-3">
+                        <div class="text-center p-4">
+                            <div class="mb-3">
+                                <i class="fas fa-users text-info" style="font-size: 2rem;"></i>
+                            </div>
+                            <div class="fw-bold text-info" style="font-size: 1.5rem;">24</div>
+                            <div class="text-muted">Active Contractors</div>
+                        </div>
+                    </div>
+                    <div class="col col-3">
+                        <div class="text-center p-4">
+                            <div class="mb-3">
+                                <i class="fas fa-clock text-warning" style="font-size: 2rem;"></i>
+                            </div>
+                            <div class="fw-bold text-warning" style="font-size: 1.5rem;">2.1</div>
+                            <div class="text-muted">Avg. Months/Project</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Key Achievements -->
+<div class="row mb-4">
+    <div class="col col-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Key Achievements</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled">
+                    <li class="mb-3">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-check-circle text-success"></i>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <div class="fw-medium">{{ completed_projects|default:"0" }} projects completed on time</div>
+                                <small class="text-muted">Average delivery: 2 days early</small>
+                            </div>
+                        </div>
+                    </li>
+                    <li class="mb-3">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-money-bill-wave text-success"></i>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <div class="fw-medium">12% under budget average</div>
+                                <small class="text-muted">Saved ₦850,000 this quarter</small>
+                            </div>
+                        </div>
+                    </li>
+                    <li class="mb-3">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-star text-warning"></i>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <div class="fw-medium">95% client satisfaction</div>
+                                <small class="text-muted">Based on project reviews</small>
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col col-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Areas for Improvement</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled">
+                    <li class="mb-3">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-exclamation-triangle text-warning"></i>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <div class="fw-medium">Material cost variance</div>
+                                <small class="text-muted">Steel prices increased 8% mid-quarter</small>
+                            </div>
+                        </div>
+                    </li>
+                    <li class="mb-3">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-clock text-info"></i>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <div class="fw-medium">Permit processing delays</div>
+                                <small class="text-muted">Average 5-day delay on new permits</small>
+                            </div>
+                        </div>
+                    </li>
+                    <li class="mb-3">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-users text-danger"></i>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <div class="fw-medium">Contractor availability</div>
+                                <small class="text-muted">Peak season scheduling conflicts</small>
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Next Quarter Goals -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Q{{ quarter|add:1 }} {{ year }} Goals</h5>
+                <p class="text-muted mb-0">Strategic objectives for next quarter</p>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col col-4">
+                        <div class="p-3 text-center">
+                            <div class="mb-3">
+                                <i class="fas fa-target text-primary" style="font-size: 2rem;"></i>
+                            </div>
+                            <h6 class="fw-bold">Revenue Target</h6>
+                            <div class="fw-bold text-primary" style="font-size: 1.25rem;">
+                                <span class="currency-symbol">₦</span><span class="currency-value" data-usd="2500000" data-ngn="2500000">2,500,000</span>
+                            </div>
+                            <small class="text-muted">+18% growth target</small>
+                        </div>
+                    </div>
+                    <div class="col col-4">
+                        <div class="p-3 text-center">
+                            <div class="mb-3">
+                                <i class="fas fa-building text-success" style="font-size: 2rem;"></i>
+                            </div>
+                            <h6 class="fw-bold">New Projects</h6>
+                            <div class="fw-bold text-success" style="font-size: 1.25rem;">8-10</div>
+                            <small class="text-muted">Focus on mid-size residential</small>
+                        </div>
+                    </div>
+                    <div class="col col-4">
+                        <div class="p-3 text-center">
+                            <div class="mb-3">
+                                <i class="fas fa-chart-line text-warning" style="font-size: 2rem;"></i>
+                            </div>
+                            <h6 class="fw-bold">Efficiency</h6>
+                            <div class="fw-bold text-warning" style="font-size: 1.25rem;">95%</div>
+                            <small class="text-muted">On-time delivery rate</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Monthly Performance Chart
+    const monthlyCtx = document.getElementById('monthlyPerformanceChart');
+    if (monthlyCtx) {
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const quarterMonth = {{ quarter|add:"-1" }} * 3;
+        const labels = [
+            monthNames[quarterMonth],
+            monthNames[quarterMonth + 1], 
+            monthNames[quarterMonth + 2]
+        ];
+        
+        new Chart(monthlyCtx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Expenses',
+                    data: [850000, 920000, 780000], // Sample data
+                    backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                    borderColor: 'rgb(59, 130, 246)',
+                    borderWidth: 2
+                }, {
+                    label: 'Budget',
+                    data: [900000, 950000, 900000], // Sample data
+                    backgroundColor: 'rgba(16, 185, 129, 0.8)',
+                    borderColor: 'rgb(16, 185, 129)',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '₦' + (value / 1000) + 'K';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    // Budget Comparison Chart
+    const budgetCtx = document.getElementById('budgetComparisonChart');
+    if (budgetCtx) {
+        new Chart(budgetCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Used Budget', 'Remaining Budget'],
+                datasets: [{
+                    data: [{{ quarter_expenses|default:"0" }}, {{ quarter_expenses|default:"0"|add:"500000" }}],
+                    backgroundColor: [
+                        'rgba(239, 68, 68, 0.8)',
+                        'rgba(34, 197, 94, 0.8)'
+                    ],
+                    borderWidth: 3,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    }
+                },
+                cutout: '60%'
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

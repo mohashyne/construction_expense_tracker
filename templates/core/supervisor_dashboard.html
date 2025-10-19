@@ -1,0 +1,360 @@
+{% extends 'base.html' %}
+
+{% block title %}Executive Dashboard - {{ company.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-chart-line me-2"></i>Executive Dashboard
+        </h1>
+        <div class="d-sm-flex">
+            <span class="badge bg-primary fs-6 me-2">{{ company.name }}</span>
+            <span class="badge bg-secondary fs-6">{{ membership.role.name }}</span>
+        </div>
+    </div>
+
+    <!-- Key Metrics Row -->
+    <div class="row">
+        <!-- Projects Overview -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Total Projects
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_projects }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-project-diagram fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Projects -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Active Projects
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ active_projects }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-play-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Budget -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Total Budget
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                ₦{{ total_budget|floatformat:0|default:"0" }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Spent -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Total Spent
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                ₦{{ total_spent|floatformat:0|default:"0" }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-money-bill-wave fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Budget Utilization Chart -->
+        <div class="col-xl-8 col-lg-7">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Budget Utilization Overview</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-area">
+                        <canvas id="budgetChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Project Status Breakdown -->
+        <div class="col-xl-4 col-lg-5">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Project Status</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-pie pt-4 pb-2">
+                        <canvas id="statusChart"></canvas>
+                    </div>
+                    <div class="mt-4 text-center small">
+                        <span class="mr-2">
+                            <i class="fas fa-circle text-primary"></i> Active ({{ active_projects }})
+                        </span>
+                        <span class="mr-2">
+                            <i class="fas fa-circle text-success"></i> Completed ({{ completed_projects }})
+                        </span>
+                        <span class="mr-2">
+                            <i class="fas fa-circle text-info"></i> Other
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Overdue Projects Alert -->
+        {% if overdue_projects %}
+        <div class="col-lg-6 mb-4">
+            <div class="card border-left-danger shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Overdue Projects Alert
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% for project in overdue_projects %}
+                    <div class="alert alert-danger" role="alert">
+                        <strong>{{ project.name }}</strong> is overdue by {{ project.days_remaining|default:"0" }} days.
+                        <br>
+                        <small>Expected completion: {{ project.expected_completion_date }}</small>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Recent Notifications -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-bell me-2"></i>Recent Updates
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% for notification in recent_notifications %}
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="mr-3">
+                            {% if notification.priority == 'urgent' %}
+                                <div class="icon-circle bg-danger">
+                                    <i class="fas fa-exclamation text-white"></i>
+                                </div>
+                            {% elif notification.priority == 'high' %}
+                                <div class="icon-circle bg-warning">
+                                    <i class="fas fa-exclamation-triangle text-white"></i>
+                                </div>
+                            {% else %}
+                                <div class="icon-circle bg-primary">
+                                    <i class="fas fa-info text-white"></i>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="small text-gray-500">{{ notification.created_at|timesince }} ago</div>
+                            <div class="font-weight-bold">{{ notification.title }}</div>
+                            <div class="text-gray-900">{{ notification.message|truncatewords:15 }}</div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted text-center">No recent notifications</p>
+                    {% endfor %}
+                    
+                    {% if recent_notifications %}
+                    <div class="text-center">
+                        <a href="{% url 'core:notifications' %}" class="btn btn-primary btn-sm">
+                            View All Notifications
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats Row -->
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-chart-bar me-2"></i>Performance Summary
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <div class="border-right">
+                                <div class="h5 font-weight-bold">{{ pending_expenses }}</div>
+                                <div class="text-muted">Pending Expenses</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="border-right">
+                                <div class="h5 font-weight-bold">
+                                    {% if total_budget > 0 %}
+                                        {{ total_spent|mul:100|div:total_budget|floatformat:1 }}%
+                                    {% else %}
+                                        0%
+                                    {% endif %}
+                                </div>
+                                <div class="text-muted">Budget Utilized</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="border-right">
+                                <div class="h5 font-weight-bold">
+                                    {% if total_projects > 0 %}
+                                        {{ completed_projects|mul:100|div:total_projects|floatformat:1 }}%
+                                    {% else %}
+                                        0%
+                                    {% endif %}
+                                </div>
+                                <div class="text-muted">Projects Completed</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="h5 font-weight-bold text-success">
+                                ₦{{ total_budget|sub:total_spent|floatformat:0|default:"0" }}
+                            </div>
+                            <div class="text-muted">Budget Remaining</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.border-left-primary {
+    border-left: 0.25rem solid #4e73df !important;
+}
+
+.border-left-success {
+    border-left: 0.25rem solid #1cc88a !important;
+}
+
+.border-left-info {
+    border-left: 0.25rem solid #36b9cc !important;
+}
+
+.border-left-warning {
+    border-left: 0.25rem solid #f6c23e !important;
+}
+
+.border-left-danger {
+    border-left: 0.25rem solid #e74a3b !important;
+}
+
+.icon-circle {
+    height: 2.5rem;
+    width: 2.5rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.text-gray-800 {
+    color: #5a5c69 !important;
+}
+
+.text-gray-900 {
+    color: #3a3b45 !important;
+}
+
+.text-gray-500 {
+    color: #858796 !important;
+}
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Budget Chart
+const budgetCtx = document.getElementById('budgetChart').getContext('2d');
+const budgetChart = new Chart(budgetCtx, {
+    type: 'line',
+    data: {
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+        datasets: [{
+            label: 'Budget Used',
+            data: [{{ total_spent|default:"0" }}, {{ total_spent|default:"0" }}, {{ total_spent|default:"0" }}, {{ total_spent|default:"0" }}, {{ total_spent|default:"0" }}, {{ total_spent|default:"0" }}],
+            borderColor: '#4e73df',
+            backgroundColor: 'rgba(78, 115, 223, 0.1)',
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    callback: function(value) {
+                        return '₦' + value.toLocaleString();
+                    }
+                }
+            }
+        }
+    }
+});
+
+// Status Chart
+const statusCtx = document.getElementById('statusChart').getContext('2d');
+const statusChart = new Chart(statusCtx, {
+    type: 'doughnut',
+    data: {
+        labels: ['Active', 'Completed', 'Other'],
+        datasets: [{
+            data: [{{ active_projects }}, {{ completed_projects }}, {{ total_projects|sub:active_projects|sub:completed_projects }}],
+            backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc'],
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                display: false
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

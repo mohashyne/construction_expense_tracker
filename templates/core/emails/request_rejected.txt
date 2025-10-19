@@ -1,0 +1,7 @@
+Request Rejected
+
+Dear {{ activation_request.first_name }},
+
+Your registration request has been reviewed.
+{% if rejection_reason %}Reason: {{ rejection_reason }}{% endif %}
+Contact: {{ contact_email }}

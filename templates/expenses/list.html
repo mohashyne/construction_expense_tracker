@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+
+{% block title %}Expenses - ConstructPro{% endblock %}
+
+{% block page_title %}Expenses{% endblock %}
+{% block page_subtitle %}Track and manage all your construction project expenses{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-between align-center mb-4">
+    <div>
+        <h2>Expense Management</h2>
+        <p class="text-muted">Monitor and control project costs effectively</p>
+    </div>
+    <div class="d-flex gap-2">
+        <button class="btn btn-outline-primary">
+            <i class="fas fa-download"></i>
+            Export
+        </button>
+        <a href="{% url 'expenses:create' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i>
+            Add Expense
+        </a>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row mb-4">
+    <div class="col col-3">
+        <div class="card">
+            <div class="card-stat">
+                <div class="card-stat-icon" style="background: var(--accent-100); color: var(--accent-600);">
+                    <i class="fas fa-coins"></i>
+                </div>
+                <div class="card-stat-value text-primary"><span class="currency-symbol">₦</span><span class="currency-value" data-usd="0" data-ngn="0">0</span></div>
+                <div class="card-stat-label">Total Expenses</div>
+            </div>
+        </div>
+    </div>
+    <div class="col col-3">
+        <div class="card">
+            <div class="card-stat">
+                <div class="card-stat-icon" style="background: var(--accent-100); color: var(--accent-600);">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="card-stat-value text-success">0</div>
+                <div class="card-stat-label">Approved</div>
+            </div>
+        </div>
+    </div>
+    <div class="col col-3">
+        <div class="card">
+            <div class="card-stat">
+                <div class="card-stat-icon" style="background: var(--yellow-100); color: var(--yellow-600);">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="card-stat-value text-warning">0</div>
+                <div class="card-stat-label">Pending Review</div>
+            </div>
+        </div>
+    </div>
+    <div class="col col-3">
+        <div class="card">
+            <div class="card-stat">
+                <div class="card-stat-icon" style="background: var(--red-100); color: var(--red-600);">
+                    <i class="fas fa-times-circle"></i>
+                </div>
+                <div class="card-stat-value text-danger">0</div>
+                <div class="card-stat-label">Rejected</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get">
+            <div class="row">
+                <div class="col col-3">
+                    <div class="form-group">
+                        <label class="form-label fw-semibold">Search</label>
+                        <input type="text" class="form-control" name="search" placeholder="Description, vendor..." value="{{ request.GET.search }}">
+                    </div>
+                </div>
+                <div class="col col-2">
+                    <div class="form-group">
+                        <label class="form-label fw-semibold">Project</label>
+                        <select class="form-control form-select" name="project">
+                            <option value="">All Projects</option>
+                            <!-- Add projects dynamically -->
+                        </select>
+                    </div>
+                </div>
+                <div class="col col-2">
+                    <div class="form-group">
+                        <label class="form-label fw-semibold">Category</label>
+                        <select class="form-control form-select" name="category">
+                            <option value="">All Categories</option>
+                            <option value="materials">Materials</option>
+                            <option value="labor">Labor</option>
+                            <option value="equipment">Equipment</option>
+                            <option value="permits">Permits</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col col-2">
+                    <div class="form-group">
+                        <label class="form-label fw-semibold">Status</label>
+                        <select class="form-control form-select" name="status">
+                            <option value="">All Status</option>
+                            <option value="pending">Pending</option>
+                            <option value="approved">Approved</option>
+                            <option value="rejected">Rejected</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col col-2">
+                    <div class="form-group">
+                        <label class="form-label fw-semibold">Date Range</label>
+                        <input type="date" class="form-control" name="date_from" value="{{ request.GET.date_from }}">
+                    </div>
+                </div>
+                <div class="col col-1">
+                    <div class="form-group">
+                        <label class="form-label">&nbsp;</label>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-filter"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Expenses Table -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="card-title mb-0">All Expenses</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="text-center py-5">
+            <div class="mb-3">
+                <i class="fas fa-receipt text-muted" style="font-size: 4rem; opacity: 0.3;"></i>
+            </div>
+            <h5 class="text-muted">No expenses found</h5>
+            <p class="text-muted mb-4">Start by adding your first expense to track project costs.</p>
+            <a href="{% url 'expenses:create' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i>
+                Add First Expense
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

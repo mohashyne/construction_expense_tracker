@@ -1,0 +1,414 @@
+{% extends "super_owner_base.html" %}
+
+{% block page_title %}Super Owners Management{% endblock %}
+{% block page_subtitle %}Manage super owner accounts and permissions{% endblock %}
+
+{% block main_content %}
+<div class="row">
+    <div class="col-12">
+        <!-- Super Owners Overview Cards -->
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <div class="badge badge-warning badge-lg">
+                            <i class="fas fa-crown"></i>
+                            {{ total_super_owners }}
+                        </div>
+                        <p class="text-muted mt-2">Total Super Owners</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <div class="badge badge-success badge-lg">
+                            <i class="fas fa-shield-alt"></i>
+                            {{ primary_owners }}
+                        </div>
+                        <p class="text-muted mt-2">Primary Owners</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <div class="badge badge-info badge-lg">
+                            <i class="fas fa-user-cog"></i>
+                            {{ delegated_owners }}
+                        </div>
+                        <p class="text-muted mt-2">Delegated Owners</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Super Owners List -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h3 class="card-title">
+                    <i class="fas fa-crown"></i> Super Owners List
+                </h3>
+                <div class="d-flex gap-2">
+                    {% if super_owner_profile.can_delegate_permissions %}
+                        <button class="btn btn-sm btn-success" data-toggle="modal" data-target="#createSuperOwnerModal">
+                            <i class="fas fa-plus"></i> Add Super Owner
+                        </button>
+                    {% endif %}
+                    <button class="btn btn-sm btn-primary" onclick="refreshData()">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <!-- Super Owners Table -->
+                {% if super_owners %}
+                    <div class="admin-table-wrapper">
+                        <table class="table table-hover">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>User</th>
+                                    <th>Type</th>
+                                    <th>Permissions</th>
+                                    <th>Companies</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for super_owner in super_owners %}
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="user-avatar me-2">
+                                                    <div class="avatar-placeholder">
+                                                        {{ super_owner.user.first_name.0|default:super_owner.user.username.0|upper }}
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <h6 class="mb-0">{{ super_owner.user.get_full_name|default:super_owner.user.username }}</h6>
+                                                    <small class="text-muted">{{ super_owner.user.email }}</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            {% if super_owner.is_primary_owner %}
+                                                <span class="badge badge-danger">
+                                                    <i class="fas fa-shield-alt"></i> Primary Owner
+                                                </span>
+                                            {% else %}
+                                                <span class="badge badge-warning">
+                                                    <i class="fas fa-crown"></i> Delegated Owner
+                                                </span>
+                                            {% endif %}
+                                            <br>
+                                            <small class="text-muted">Level: {{ super_owner.get_delegation_level_display }}</small>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                {% if super_owner.can_manage_companies %}
+                                                    <span class="badge badge-sm badge-primary">Companies</span>
+                                                {% endif %}
+                                                {% if super_owner.can_manage_users %}
+                                                    <span class="badge badge-sm badge-info">Users</span>
+                                                {% endif %}
+                                                {% if super_owner.can_activate_accounts %}
+                                                    <span class="badge badge-sm badge-success">Activations</span>
+                                                {% endif %}
+                                                {% if super_owner.can_access_django_admin %}
+                                                    <span class="badge badge-sm badge-warning">Admin</span>
+                                                {% endif %}
+                                                {% if super_owner.can_delegate_permissions %}
+                                                    <span class="badge badge-sm badge-danger">Delegation</span>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            {% if super_owner.allowed_companies.exists %}
+                                                <span class="badge badge-light">
+                                                    <i class="fas fa-building"></i> {{ super_owner.allowed_companies.count }}
+                                                </span>
+                                                <br>
+                                                <small class="text-muted">Restricted</small>
+                                            {% else %}
+                                                <span class="text-success">
+                                                    <i class="fas fa-globe"></i> All Companies
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">
+                                                {{ super_owner.created_at|date:"M d, Y" }}<br>
+                                                {% if super_owner.created_by %}
+                                                    by {{ super_owner.created_by.get_full_name|default:super_owner.created_by.username }}
+                                                {% endif %}
+                                            </small>
+                                        </td>
+                                        <td>
+                                            <div class="dropdown">
+                                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-toggle="dropdown">
+                                                    <i class="fas fa-ellipsis-v"></i>
+                                                </button>
+                                                <div class="dropdown-menu">
+                                                    <a class="dropdown-item" href="#" onclick="viewSuperOwnerDetails('{{ super_owner.id }}')">
+                                                        <i class="fas fa-eye"></i> View Details
+                                                    </a>
+                                                    {% if super_owner_profile.can_delegate_permissions and not super_owner.is_primary_owner %}
+                                                        <a class="dropdown-item" href="#" onclick="editSuperOwner('{{ super_owner.id }}')">
+                                                            <i class="fas fa-edit"></i> Edit Permissions
+                                                        </a>
+                                                        <div class="dropdown-divider"></div>
+                                                        <a class="dropdown-item text-danger" href="#" onclick="removeSuperOwner('{{ super_owner.id }}')">
+                                                            <i class="fas fa-trash"></i> Remove Access
+                                                        </a>
+                                                    {% endif %}
+                                                    <div class="dropdown-divider"></div>
+                                                    <a class="dropdown-item" href="/admin/core/superowner/{{ super_owner.id }}/change/" target="_blank">
+                                                        <i class="fas fa-external-link-alt"></i> Edit in Django Admin
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-crown fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No super owners found</h5>
+                        <p class="text-muted">No super owner accounts are configured in the system.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Super Owner Modal -->
+{% if super_owner_profile.can_delegate_permissions %}
+<div class="modal fade" id="createSuperOwnerModal" tabindex="-1" role="dialog" aria-labelledby="createSuperOwnerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createSuperOwnerModalLabel">
+                    <i class="fas fa-plus"></i> Create Super Owner
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="createSuperOwnerForm">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="user_select">Select User</label>
+                        <select class="form-control" id="user_select" name="user_id" required>
+                            <option value="">Choose a user...</option>
+                            <!-- Options would be populated via AJAX -->
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="delegation_level">Delegation Level</label>
+                        <select class="form-control" id="delegation_level" name="delegation_level" required>
+                            <option value="limited">Limited - Basic permissions</option>
+                            <option value="moderate">Moderate - Most permissions</option>
+                            <option value="full">Full - All permissions</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="can_manage_companies" name="can_manage_companies">
+                                <label class="form-check-label" for="can_manage_companies">
+                                    Manage Companies
+                                </label>
+                            </div>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="can_manage_users" name="can_manage_users">
+                                <label class="form-check-label" for="can_manage_users">
+                                    Manage Users
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="can_activate_accounts" name="can_activate_accounts">
+                                <label class="form-check-label" for="can_activate_accounts">
+                                    Activate Accounts
+                                </label>
+                            </div>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="can_access_django_admin" name="can_access_django_admin">
+                                <label class="form-check-label" for="can_access_django_admin">
+                                    Access Django Admin
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="can_view_system_analytics" name="can_view_system_analytics">
+                                <label class="form-check-label" for="can_view_system_analytics">
+                                    View System Analytics
+                                </label>
+                            </div>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="can_manage_billing" name="can_manage_billing">
+                                <label class="form-check-label" for="can_manage_billing">
+                                    Manage Billing
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-plus"></i> Create Super Owner
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<script>
+// Refresh data
+function refreshData() {
+    window.location.reload();
+}
+
+// View super owner details
+function viewSuperOwnerDetails(superOwnerId) {
+    // This would open a modal or navigate to detail page
+    alert('View details functionality would be implemented here for Super Owner ID: ' + superOwnerId);
+}
+
+// Edit super owner
+function editSuperOwner(superOwnerId) {
+    // This would open an edit modal
+    alert('Edit functionality would be implemented here for Super Owner ID: ' + superOwnerId);
+}
+
+// Remove super owner
+function removeSuperOwner(superOwnerId) {
+    if (confirm('Are you sure you want to remove super owner access for this user? This action cannot be undone.')) {
+        // AJAX call to remove super owner access
+        fetch(`{% url 'super_owner:manage_super_owners' %}${superOwnerId}/remove/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error removing super owner: ' + (data.message || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while removing super owner');
+        });
+    }
+}
+
+// Handle create super owner form
+document.getElementById('createSuperOwnerForm')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const data = Object.fromEntries(formData.entries());
+    
+    // Convert checkboxes to booleans
+    const checkboxes = ['can_manage_companies', 'can_manage_users', 'can_activate_accounts', 
+                       'can_access_django_admin', 'can_view_system_analytics', 'can_manage_billing'];
+    
+    checkboxes.forEach(checkbox => {
+        data[checkbox] = formData.has(checkbox);
+    });
+    
+    fetch(`{% url 'super_owner:create_super_owner' %}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            $('#createSuperOwnerModal').modal('hide');
+            location.reload();
+        } else {
+            alert('Error creating super owner: ' + (data.message || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while creating super owner');
+    });
+});
+
+// Load users for dropdown when modal opens
+$('#createSuperOwnerModal').on('show.bs.modal', function() {
+    // This would load available users via AJAX
+    console.log('Loading users for super owner creation...');
+});
+</script>
+
+<style>
+.avatar-placeholder {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: var(--admin-accent);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 1.125rem;
+}
+
+.badge-sm {
+    padding: 0.2em 0.4em;
+    font-size: 0.7em;
+    margin: 0.1em;
+}
+
+.modal-dialog {
+    max-width: 600px;
+}
+
+.form-check {
+    padding-left: 1.5rem;
+}
+
+.form-check-input {
+    margin-left: -1.5rem;
+}
+</style>
+
+<!-- Add CSRF token for AJAX requests -->
+{% csrf_token %}
+{% endblock %}

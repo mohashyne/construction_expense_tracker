@@ -1,0 +1,199 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Activation Requests - Super Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-clipboard-check"></i> Registration Requests Management</h2>
+                <div>
+                    <a href="{% url 'admin:index' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-cogs"></i> Django Admin
+                    </a>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-3">
+                            <label for="status" class="form-label">Status</label>
+                            <select name="status" id="status" class="form-select">
+                                <option value="">All Statuses</option>
+                                {% for value, label in status_choices %}
+                                    <option value="{{ value }}" {% if value == status_filter %}selected{% endif %}>
+                                        {{ label }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="type" class="form-label">Request Type</label>
+                            <select name="type" id="type" class="form-select">
+                                <option value="">All Types</option>
+                                {% for value, label in request_type_choices %}
+                                    <option value="{{ value }}" {% if value == request_type_filter %}selected{% endif %}>
+                                        {{ label }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary me-2">
+                                <i class="fas fa-filter"></i> Filter
+                            </button>
+                            <a href="{% url 'core:activation_requests_list' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times"></i> Clear
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card text-center border-warning">
+                        <div class="card-body">
+                            <h5 class="card-title text-warning">Pending</h5>
+                            <h3>{{ activation_requests|length }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center border-info">
+                        <div class="card-body">
+                            <h5 class="card-title text-info">Under Review</h5>
+                            <h3>0</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center border-success">
+                        <div class="card-body">
+                            <h5 class="card-title text-success">Approved</h5>
+                            <h3>0</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center border-danger">
+                        <div class="card-body">
+                            <h5 class="card-title text-danger">Rejected</h5>
+                            <h3>0</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Requests Table -->
+            <div class="card">
+                <div class="card-body">
+                    {% if activation_requests %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Type</th>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Company</th>
+                                        <th>Status</th>
+                                        <th>Documents</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for request in activation_requests %}
+                                        <tr>
+                                            <td>{{ request.created_at|date:"M d, Y" }}</td>
+                                            <td>
+                                                <span class="badge 
+                                                    {% if request.request_type == 'company_registration' %}bg-primary
+                                                    {% else %}bg-info{% endif %}">
+                                                    {% if request.request_type == 'company_registration' %}
+                                                        <i class="fas fa-building"></i>
+                                                    {% else %}
+                                                        <i class="fas fa-user"></i>
+                                                    {% endif %}
+                                                    {{ request.get_request_type_display }}
+                                                </span>
+                                            </td>
+                                            <td>{{ request.first_name }} {{ request.last_name }}</td>
+                                            <td>{{ request.email }}</td>
+                                            <td>{{ request.company_name|default:"-" }}</td>
+                                            <td>
+                                                <span class="badge 
+                                                    {% if request.status == 'approved' %}bg-success
+                                                    {% elif request.status == 'rejected' %}bg-danger
+                                                    {% elif request.status == 'under_review' %}bg-warning
+                                                    {% elif request.status == 'documents_required' %}bg-warning
+                                                    {% else %}bg-secondary{% endif %}">
+                                                    {{ request.get_status_display }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-info">
+                                                    {{ request.documents.count }} docs
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <a href="{% url 'core:activation_request_detail' request.id %}" 
+                                                   class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-eye"></i> Review
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination -->
+                        {% if activation_requests.has_other_pages %}
+                            <div class="d-flex justify-content-center mt-4">
+                                <nav>
+                                    <ul class="pagination">
+                                        {% if activation_requests.has_previous %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="?page=1{% if status_filter %}&status={{ status_filter }}{% endif %}{% if request_type_filter %}&type={{ request_type_filter }}{% endif %}">First</a>
+                                            </li>
+                                            <li class="page-item">
+                                                <a class="page-link" href="?page={{ activation_requests.previous_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if request_type_filter %}&type={{ request_type_filter }}{% endif %}">Previous</a>
+                                            </li>
+                                        {% endif %}
+
+                                        <li class="page-item active">
+                                            <span class="page-link">{{ activation_requests.number }} of {{ activation_requests.paginator.num_pages }}</span>
+                                        </li>
+
+                                        {% if activation_requests.has_next %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="?page={{ activation_requests.next_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if request_type_filter %}&type={{ request_type_filter }}{% endif %}">Next</a>
+                                            </li>
+                                            <li class="page-item">
+                                                <a class="page-link" href="?page={{ activation_requests.paginator.num_pages }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if request_type_filter %}&type={{ request_type_filter }}{% endif %}">Last</a>
+                                            </li>
+                                        {% endif %}
+                                    </ul>
+                                </nav>
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                            <h5>No registration requests found</h5>
+                            <p class="text-muted">Registration requests will appear here when users submit them.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

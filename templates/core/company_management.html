@@ -1,0 +1,335 @@
+{% extends 'base.html' %}
+
+{% block title %}Company Management - {{ company.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-cogs me-2"></i>Company Management
+        </h1>
+        <span class="badge bg-primary fs-6">{{ company.name }}</span>
+    </div>
+
+    <!-- Company Info Row -->
+    <div class="row mb-4">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-building me-2"></i>Company Information
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Company Name:</strong> {{ company.name }}</p>
+                            <p><strong>Email:</strong> {{ company.email }}</p>
+                            <p><strong>Phone:</strong> {{ company.phone|default:"Not provided" }}</p>
+                            <p><strong>Website:</strong> 
+                                {% if company.website %}
+                                    <a href="{{ company.website }}" target="_blank">{{ company.website }}</a>
+                                {% else %}
+                                    Not provided
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Subscription:</strong> 
+                                <span class="badge bg-{{ company.subscription_type|yesno:'success,warning' }}">
+                                    {{ company.get_subscription_type_display }}
+                                </span>
+                            </p>
+                            <p><strong>Status:</strong> 
+                                <span class="badge bg-{{ company.is_active|yesno:'success,danger' }}">
+                                    {{ company.is_active|yesno:"Active,Inactive" }}
+                                </span>
+                            </p>
+                            <p><strong>Created:</strong> {{ company.created_at|date:"M d, Y" }}</p>
+                            <p><strong>Timezone:</strong> {{ company.timezone }}</p>
+                        </div>
+                    </div>
+                    {% if company.description %}
+                    <div class="row">
+                        <div class="col-12">
+                            <p><strong>Description:</strong></p>
+                            <p class="text-muted">{{ company.description }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Quick Actions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'core:invite_user' %}" class="btn btn-success">
+                            <i class="fas fa-user-plus me-2"></i>Invite User
+                        </a>
+                        <a href="{% url 'core:role_create' %}" class="btn btn-primary">
+                            <i class="fas fa-shield-alt me-2"></i>Create Role
+                        </a>
+                        <button class="btn btn-info" data-bs-toggle="modal" data-bs-target="#companySettingsModal">
+                            <i class="fas fa-cog me-2"></i>Company Settings
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Roles Management -->
+    <div class="row mb-4">
+        <div class="col-lg-6">
+            <div class="card shadow">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-shield-alt me-2"></i>Roles & Permissions
+                    </h6>
+                    <a href="{% url 'core:role_create' %}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-plus me-1"></i>New Role
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Role Name</th>
+                                    <th>Type</th>
+                                    <th>Members</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for role in roles %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ role.name }}</strong>
+                                        {% if role.description %}
+                                            <br><small class="text-muted">{{ role.description }}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if role.is_admin %}
+                                            <span class="badge bg-danger">Admin</span>
+                                        {% elif role.is_supervisor %}
+                                            <span class="badge bg-warning">Supervisor</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Employee</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info">
+                                            {{ role.companymembership_set.count }} members
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'core:role_edit' role.id %}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted">No roles created yet</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Team Members -->
+        <div class="col-lg-6">
+            <div class="card shadow">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-users me-2"></i>Team Members
+                    </h6>
+                    <a href="{% url 'core:invite_user' %}" class="btn btn-success btn-sm">
+                        <i class="fas fa-user-plus me-1"></i>Invite User
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Role</th>
+                                    <th>Status</th>
+                                    <th>Joined</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for member in members %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-sm me-2">
+                                                {% if member.user.userprofile.avatar %}
+                                                    <img src="{{ member.user.userprofile.avatar.url }}" class="rounded-circle" width="32" height="32">
+                                                {% else %}
+                                                    <div class="avatar-placeholder rounded-circle d-flex align-items-center justify-content-center bg-primary text-white" style="width: 32px; height: 32px;">
+                                                        {{ member.user.first_name|first|upper }}{{ member.user.last_name|first|upper }}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                            <div>
+                                                <strong>{{ member.user.get_full_name|default:member.user.username }}</strong>
+                                                <br><small class="text-muted">{{ member.user.email }}</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if member.role %}
+                                            <span class="badge bg-{% if member.role.is_admin %}danger{% elif member.role.is_supervisor %}warning{% else %}secondary{% endif %}">
+                                                {{ member.role.name }}
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-light text-dark">No Role</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{% if member.status == 'active' %}success{% elif member.status == 'invited' %}warning{% else %}secondary{% endif %}">
+                                            {{ member.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <small>
+                                            {% if member.joined_date %}
+                                                {{ member.joined_date|date:"M d, Y" }}
+                                            {% else %}
+                                                Not joined
+                                            {% endif %}
+                                        </small>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted">No team members yet</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Activity Summary -->
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-chart-bar me-2"></i>Company Activity Summary
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <div class="border-right">
+                                <div class="h4 font-weight-bold text-primary">{{ company.projects.count }}</div>
+                                <div class="text-muted">Total Projects</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="border-right">
+                                <div class="h4 font-weight-bold text-success">{{ members.count }}</div>
+                                <div class="text-muted">Team Members</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="border-right">
+                                <div class="h4 font-weight-bold text-info">{{ roles.count }}</div>
+                                <div class="text-muted">Active Roles</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="h4 font-weight-bold text-warning">{{ company.contractors.count }}</div>
+                            <div class="text-muted">Contractors</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Company Settings Modal -->
+<div class="modal fade" id="companySettingsModal" tabindex="-1" aria-labelledby="companySettingsModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="companySettingsModalLabel">
+                    <i class="fas fa-cog me-2"></i>Company Settings
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="list-group">
+                    <a href="#" class="list-group-item list-group-item-action">
+                        <i class="fas fa-building me-2"></i>Company Profile
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action">
+                        <i class="fas fa-credit-card me-2"></i>Billing & Subscription
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action">
+                        <i class="fas fa-bell me-2"></i>Notification Settings
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action">
+                        <i class="fas fa-shield-alt me-2"></i>Security Settings
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action">
+                        <i class="fas fa-download me-2"></i>Export Data
+                    </a>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.avatar-placeholder {
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.border-right {
+    border-right: 1px solid #e3e6f0;
+}
+
+.border-right:last-child {
+    border-right: none;
+}
+
+.table th {
+    border-top: none;
+    font-weight: 600;
+    color: #5a5c69;
+    font-size: 0.875rem;
+}
+
+.card {
+    border: none;
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+}
+
+.text-gray-800 {
+    color: #5a5c69 !important;
+}
+</style>
+{% endblock %}

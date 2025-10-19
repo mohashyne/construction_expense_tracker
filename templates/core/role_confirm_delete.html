@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete Role - {{ role.name }} - ConstructPro{% endblock %}
+
+{% block page_title %}Delete Role{% endblock %}
+{% block page_subtitle %}Confirm role deletion{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-danger text-white">
+                <h4 class="card-title mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Confirm Role Deletion
+                </h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-warning me-2"></i>
+                    <strong>Warning:</strong> This action cannot be undone.
+                </div>
+                
+                <div class="mb-4">
+                    <h5>You are about to delete the following role:</h5>
+                    <div class="bg-light p-3 rounded mt-3">
+                        <h6 class="text-primary">{{ role.name }}</h6>
+                        <p class="text-muted mb-2">{{ role.description }}</p>
+                        <div class="d-flex gap-3">
+                            {% if role.is_admin %}
+                                <span class="badge bg-danger">Admin Role</span>
+                            {% endif %}
+                            {% if role.is_supervisor %}
+                                <span class="badge bg-warning">Supervisor Role</span>
+                            {% endif %}
+                            {% if role.is_team_member %}
+                                <span class="badge bg-info">Team Member Role</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                {% if members_count > 0 %}
+                <div class="alert alert-danger">
+                    <i class="fas fa-users me-2"></i>
+                    <strong>Cannot Delete:</strong> This role is currently assigned to {{ members_count }} member(s). 
+                    Please reassign these members to different roles before deleting this role.
+                </div>
+                {% else %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    This role is not currently assigned to any members and can be safely deleted.
+                </div>
+                {% endif %}
+                
+                <div class="d-flex justify-content-between">
+                    <a href="{% url 'core:user_management' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>
+                        Cancel
+                    </a>
+                    
+                    {% if members_count == 0 %}
+                    <form method="post" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash me-2"></i>
+                            Delete Role
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

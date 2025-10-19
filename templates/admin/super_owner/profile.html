@@ -1,0 +1,652 @@
+{% extends 'super_owner_base.html' %}
+
+{% block title %}Super Owner Profile - Construction Tracker{% endblock %}
+{% block page_title %}Super Owner Profile{% endblock %}
+{% block page_subtitle %}Manage your super owner account and permissions{% endblock %}
+
+{% block main_content %}
+<div class="container-fluid">
+    <!-- Profile Overview Card -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="professional-card">
+                <div class="professional-card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h4 class="mb-0">
+                                <i class="fas fa-crown text-warning me-2"></i>
+                                Super Owner Profile
+                            </h4>
+                            <p class="text-muted mb-0">Manage your account information and permissions</p>
+                        </div>
+                        <div class="profile-status-badge">
+                            {% if super_owner_profile.is_primary_owner %}
+                                <span class="badge bg-warning fs-6">Primary Owner</span>
+                            {% else %}
+                                <span class="badge bg-secondary fs-6">{{ super_owner_profile.get_delegation_level_display }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="professional-card-body">
+                    <div class="row">
+                        <!-- Profile Avatar and Basic Info -->
+                        <div class="col-md-4">
+                            <div class="profile-avatar-section">
+                                <div class="profile-avatar">
+                                    {{ user.first_name.0|default:user.username.0|upper }}
+                                </div>
+                                <div class="profile-basic-info">
+                                    <h5 class="mb-1">{{ user.get_full_name|default:user.username }}</h5>
+                                    <p class="text-muted mb-2">{{ user.email }}</p>
+                                    <div class="profile-badges">
+                                        <span class="badge bg-success me-1">Active</span>
+                                        {% if user.is_superuser %}
+                                            <span class="badge bg-danger me-1">Django Superuser</span>
+                                        {% endif %}
+                                        {% if user.is_staff %}
+                                            <span class="badge bg-info">Staff</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Account Details -->
+                        <div class="col-md-8">
+                            <div class="account-details">
+                                <h6 class="section-title">Account Details</h6>
+                                <div class="row">
+                                    <div class="col-sm-6">
+                                        <div class="detail-item">
+                                            <label class="detail-label">Member Since:</label>
+                                            <span class="detail-value">{{ user.date_joined|date:"F d, Y" }}</span>
+                                        </div>
+                                        <div class="detail-item">
+                                            <label class="detail-label">Last Login:</label>
+                                            <span class="detail-value">{{ user.last_login|date:"M d, Y H:i"|default:"Never" }}</span>
+                                        </div>
+                                        <div class="detail-item">
+                                            <label class="detail-label">Account Type:</label>
+                                            <span class="detail-value">Super Owner</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <div class="detail-item">
+                                            <label class="detail-label">Owner Type:</label>
+                                            <span class="detail-value">
+                                                {% if super_owner_profile.is_primary_owner %}
+                                                    Primary Owner
+                                                {% else %}
+                                                    {{ super_owner_profile.get_delegation_level_display }}
+                                                {% endif %}
+                                            </span>
+                                        </div>
+                                        <div class="detail-item">
+                                            <label class="detail-label">Created By:</label>
+                                            <span class="detail-value">
+                                                {% if super_owner_profile.created_by %}
+                                                    {{ super_owner_profile.created_by.get_full_name|default:super_owner_profile.created_by.username }}
+                                                {% else %}
+                                                    System
+                                                {% endif %}
+                                            </span>
+                                        </div>
+                                        <div class="detail-item">
+                                            <label class="detail-label">Created:</label>
+                                            <span class="detail-value">{{ super_owner_profile.created_at|date:"M d, Y H:i" }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Profile Update Form -->
+        <div class="col-lg-8">
+            <div class="professional-card">
+                <div class="professional-card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-edit text-primary me-2"></i>
+                        Update Profile Information
+                    </h5>
+                </div>
+
+                <div class="professional-card-body">
+                    <form method="post" class="professional-form">
+                        {% csrf_token %}
+                        
+                        <div class="form-section">
+                            <h6 class="section-title">Personal Information</h6>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="first_name" class="form-label">First Name</label>
+                                    <div class="input-container">
+                                        <input type="text" 
+                                               class="form-input" 
+                                               id="first_name" 
+                                               name="first_name" 
+                                               value="{{ user.first_name }}" 
+                                               required>
+                                        <div class="input-icon">
+                                            <i class="fas fa-user"></i>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="last_name" class="form-label">Last Name</label>
+                                    <div class="input-container">
+                                        <input type="text" 
+                                               class="form-input" 
+                                               id="last_name" 
+                                               name="last_name" 
+                                               value="{{ user.last_name }}" 
+                                               required>
+                                        <div class="input-icon">
+                                            <i class="fas fa-user"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="email" class="form-label">Email Address</label>
+                                <div class="input-container">
+                                    <input type="email" 
+                                           class="form-input" 
+                                           id="email" 
+                                           name="email" 
+                                           value="{{ user.email }}" 
+                                           required>
+                                    <div class="input-icon">
+                                        <i class="fas fa-envelope"></i>
+                                    </div>
+                                </div>
+                                <small class="form-text">This email will be used for system notifications and login.</small>
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn-primary">
+                                <i class="fas fa-save me-2"></i>
+                                Update Profile
+                            </button>
+                            <button type="reset" class="btn-secondary">
+                                <i class="fas fa-undo me-2"></i>
+                                Reset
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Permissions & Access -->
+        <div class="col-lg-4">
+            <div class="professional-card">
+                <div class="professional-card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-shield-alt text-success me-2"></i>
+                        Permissions & Access
+                    </h5>
+                </div>
+
+                <div class="professional-card-body">
+                    <div class="permissions-list">
+                        {% for perm_key, perm_value in permissions.items %}
+                            <div class="permission-item">
+                                <div class="permission-status">
+                                    {% if perm_value %}
+                                        <i class="fas fa-check-circle text-success"></i>
+                                    {% else %}
+                                        <i class="fas fa-times-circle text-danger"></i>
+                                    {% endif %}
+                                </div>
+                                <div class="permission-detail">
+                                    <div class="permission-name">
+                                        {% if perm_key == 'can_activate_accounts' %}
+                                            Account Activation
+                                        {% elif perm_key == 'can_manage_companies' %}
+                                            Company Management
+                                        {% elif perm_key == 'can_delegate_permissions' %}
+                                            Permission Delegation
+                                        {% elif perm_key == 'can_access_financial_reports' %}
+                                            Financial Reports Access
+                                        {% endif %}
+                                    </div>
+                                    <div class="permission-description">
+                                        {% if perm_key == 'can_activate_accounts' %}
+                                            Approve or reject account registration requests
+                                        {% elif perm_key == 'can_manage_companies' %}
+                                            Create, edit, and manage company accounts
+                                        {% elif perm_key == 'can_delegate_permissions' %}
+                                            Grant super owner access to other users
+                                        {% elif perm_key == 'can_access_financial_reports' %}
+                                            View system-wide financial and analytics reports
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    {% if delegated_companies %}
+                        <div class="delegated-companies mt-4">
+                            <h6 class="section-title">Delegated Companies</h6>
+                            <div class="company-list">
+                                {% for company in delegated_companies %}
+                                    <div class="company-item">
+                                        <i class="fas fa-building text-primary me-2"></i>
+                                        {{ company.name }}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="professional-card mt-4">
+                <div class="professional-card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-bolt text-warning me-2"></i>
+                        Quick Actions
+                    </h5>
+                </div>
+
+                <div class="professional-card-body">
+                    <div class="quick-actions">
+                        <a href="{% url 'core:super_owner_dashboard' %}" class="quick-action-btn">
+                            <i class="fas fa-tachometer-alt"></i>
+                            <span>Dashboard</span>
+                        </a>
+                        
+                        <a href="/admin/" class="quick-action-btn" target="_blank">
+                            <i class="fas fa-cogs"></i>
+                            <span>Django Admin</span>
+                        </a>
+                        
+                        <a href="{% url 'core:super_owner_registrations' %}" class="quick-action-btn">
+                            <i class="fas fa-user-plus"></i>
+                            <span>Registration Requests</span>
+                        </a>
+                        
+                        <a href="{% url 'core:backup_management' %}" class="quick-action-btn">
+                            <i class="fas fa-database"></i>
+                            <span>System Backup</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Professional Container Styling */
+.professional-card {
+    background: white;
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.professional-card:hover {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    transform: translateY(-2px);
+}
+
+.professional-card-header {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-bottom: 1px solid #dee2e6;
+    padding: 1.5rem;
+}
+
+.professional-card-body {
+    padding: 1.5rem;
+}
+
+/* Profile Avatar Section */
+.profile-avatar-section {
+    text-align: center;
+    padding: 1rem;
+}
+
+.profile-avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    font-weight: 600;
+    margin: 0 auto 1rem;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+
+.profile-basic-info h5 {
+    color: #1e293b;
+    font-weight: 600;
+}
+
+.profile-badges .badge {
+    font-size: 0.75rem;
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+}
+
+/* Account Details */
+.account-details {
+    padding-left: 1rem;
+}
+
+.section-title {
+    color: #374151;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.detail-item {
+    margin-bottom: 0.75rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.detail-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #6b7280;
+    margin-bottom: 0.25rem;
+}
+
+.detail-value {
+    font-size: 0.95rem;
+    color: #1f2937;
+    font-weight: 500;
+}
+
+/* Professional Form Styling */
+.professional-form {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.form-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.form-row {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.form-row .form-group {
+    flex: 1;
+    min-width: 250px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.5rem;
+}
+
+.input-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.form-input {
+    width: 100%;
+    padding: 0.875rem 3rem 0.875rem 1rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    color: #1f2937;
+    background: #ffffff;
+    transition: all 0.2s ease;
+    outline: none;
+}
+
+.form-input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.input-icon {
+    position: absolute;
+    right: 1rem;
+    color: #9ca3af;
+    pointer-events: none;
+}
+
+.form-text {
+    font-size: 0.8rem;
+    color: #6b7280;
+    margin-top: 0.25rem;
+}
+
+/* Form Actions with space-around */
+.form-actions {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e5e7eb;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.btn-primary, .btn-secondary {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.875rem 2rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    min-width: 140px;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 10px -1px rgba(59, 130, 246, 0.4);
+}
+
+.btn-secondary {
+    background: #f3f4f6;
+    color: #374151;
+    border: 2px solid #d1d5db;
+}
+
+.btn-secondary:hover {
+    background: #e5e7eb;
+    border-color: #9ca3af;
+    transform: translateY(-1px);
+}
+
+/* Permissions List */
+.permissions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.permission-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1rem;
+    background: #f9fafb;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+}
+
+.permission-status {
+    font-size: 1.25rem;
+    line-height: 1;
+}
+
+.permission-detail {
+    flex: 1;
+}
+
+.permission-name {
+    font-weight: 600;
+    color: #1f2937;
+    font-size: 0.95rem;
+    margin-bottom: 0.25rem;
+}
+
+.permission-description {
+    font-size: 0.8rem;
+    color: #6b7280;
+    line-height: 1.4;
+}
+
+/* Delegated Companies */
+.company-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.company-item {
+    padding: 0.75rem;
+    background: #f3f4f6;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    color: #1f2937;
+    border: 1px solid #e5e7eb;
+}
+
+/* Quick Actions with space-around */
+.quick-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.quick-action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding: 1rem;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    text-decoration: none;
+    color: #374151;
+    transition: all 0.2s ease;
+}
+
+.quick-action-btn:hover {
+    background: #f3f4f6;
+    border-color: #d1d5db;
+    transform: translateY(-1px);
+    color: #1f2937;
+}
+
+.quick-action-btn i {
+    font-size: 1.1rem;
+    color: #6b7280;
+}
+
+.quick-action-btn span {
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .form-row {
+        flex-direction: column;
+    }
+    
+    .form-row .form-group {
+        min-width: unset;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+        justify-content: center;
+    }
+    
+    .btn-primary, .btn-secondary {
+        width: 100%;
+        min-width: unset;
+    }
+    
+    .professional-card-body {
+        padding: 1rem;
+    }
+    
+    .professional-card-header {
+        padding: 1rem;
+    }
+    
+    .profile-avatar {
+        width: 100px;
+        height: 100px;
+        font-size: 2rem;
+    }
+}
+
+/* Status Badge */
+.profile-status-badge .badge {
+    font-size: 0.875rem;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+}
+
+/* Hover Effects */
+.permission-item:hover {
+    background: #f3f4f6;
+    border-color: #d1d5db;
+}
+
+.company-item:hover {
+    background: #e5e7eb;
+    border-color: #d1d5db;
+}
+</style>
+{% endblock %}

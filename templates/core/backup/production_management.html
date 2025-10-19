@@ -1,0 +1,527 @@
+{% if user.userprofile.is_super_owner %}
+    {% extends 'super_owner_base.html' %}
+    {% block page_title %}Production Backup Management{% endblock %}
+    {% block page_subtitle %}Multi-destination backup system with cloud storage{% endblock %}
+{% else %}
+    {% extends 'base.html' %}
+    {% block title %}Backup Management - Construction Tracker{% endblock %}
+{% endif %}
+{% load static %}
+
+{% block main_content %}
+<div class="container-fluid">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-0">
+                        <i class="fas fa-database me-2"></i>Production Backup Management
+                    </h2>
+                    <p class="text-muted mb-0">Multi-destination backup system with cloud integration</p>
+                </div>
+                <div>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createBackupModal">
+                        <i class="fas fa-plus me-2"></i>Create Backup
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary ms-2" onclick="testDestinations()">
+                        <i class="fas fa-check-circle me-2"></i>Test Destinations
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Backup Destinations Status -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-cloud me-2"></i>Backup Destinations
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for destination in backup_destinations %}
+                        <div class="col-md-4 mb-3">
+                            <div class="card border {% if destination.available %}border-success{% else %}border-warning{% endif %}">
+                                <div class="card-body text-center">
+                                    <div class="mb-2">
+                                        {% if destination.name == 'local' %}
+                                            <i class="fas fa-server fa-2x text-primary"></i>
+                                        {% elif destination.name == 'google_drive' %}
+                                            <i class="fab fa-google-drive fa-2x text-success"></i>
+                                        {% elif destination.name == 'database' %}
+                                            <i class="fas fa-database fa-2x text-info"></i>
+                                        {% endif %}
+                                    </div>
+                                    <h6 class="card-title">{{ destination.display_name }}</h6>
+                                    <span class="badge {% if destination.available %}bg-success{% else %}bg-warning{% endif %}">
+                                        {% if destination.available %}Available{% else %}Offline{% endif %}
+                                    </span>
+                                    <div class="mt-2">
+                                        <small class="text-muted">{{ destination.type|title }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Backup List by Destination -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <ul class="nav nav-tabs card-header-tabs" id="backupTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="all-backups-tab" data-bs-toggle="tab" data-bs-target="#all-backups" type="button">
+                                <i class="fas fa-list me-2"></i>All Backups
+                            </button>
+                        </li>
+                        {% for dest_name, dest_data in all_backups.items %}
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="{{ dest_name }}-tab" data-bs-toggle="tab" data-bs-target="#{{ dest_name }}" type="button">
+                                {% if dest_name == 'local' %}
+                                    <i class="fas fa-server me-2"></i>Local
+                                {% elif dest_name == 'google_drive' %}
+                                    <i class="fab fa-google-drive me-2"></i>Google Drive
+                                {% elif dest_name == 'database' %}
+                                    <i class="fas fa-database me-2"></i>Database
+                                {% endif %}
+                                ({{ dest_data.backups|length }})
+                            </button>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                <div class="card-body">
+                    <div class="tab-content" id="backupTabsContent">
+                        <!-- All Backups Tab -->
+                        <div class="tab-pane fade show active" id="all-backups" role="tabpanel">
+                            <div class="row">
+                                {% for dest_name, dest_data in all_backups.items %}
+                                {% if dest_data.backups %}
+                                <div class="col-md-6 mb-4">
+                                    <h6 class="border-bottom pb-2">
+                                        {% if dest_name == 'local' %}
+                                            <i class="fas fa-server me-2"></i>Local Storage
+                                        {% elif dest_name == 'google_drive' %}
+                                            <i class="fab fa-google-drive me-2"></i>Google Drive
+                                        {% elif dest_name == 'database' %}
+                                            <i class="fas fa-database me-2"></i>Database Backups
+                                        {% endif %}
+                                    </h6>
+                                    {% for backup in dest_data.backups %}
+                                    <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                                        <div>
+                                            <div class="fw-medium">{{ backup.filename }}</div>
+                                            <small class="text-muted">
+                                                {{ backup.size|filesizeformat }} • {{ backup.created_at|date:"M d, Y H:i" }}
+                                            </small>
+                                        </div>
+                                        <div class="btn-group btn-group-sm">
+                                            <button type="button" class="btn btn-outline-primary" 
+                                                    onclick="downloadBackup('{{ dest_name }}', '{{ backup.filename }}')">
+                                                <i class="fas fa-download"></i>
+                                            </button>
+                                            {% if dest_name == 'local' and user.userprofile.is_super_owner %}
+                                            <button type="button" class="btn btn-outline-success" 
+                                                    onclick="syncToCloud('{{ backup.filename }}')">
+                                                <i class="fas fa-cloud-upload-alt"></i>
+                                            </button>
+                                            {% endif %}
+                                            <button type="button" class="btn btn-outline-danger" 
+                                                    onclick="deleteBackup('{{ dest_name }}', '{{ backup.filename }}')">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Individual Destination Tabs -->
+                        {% for dest_name, dest_data in all_backups.items %}
+                        <div class="tab-pane fade" id="{{ dest_name }}" role="tabpanel">
+                            {% if dest_data.available %}
+                                {% if dest_data.backups %}
+                                <div class="table-responsive">
+                                    <table class="table table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Filename</th>
+                                                <th>Size</th>
+                                                <th>Created</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for backup in dest_data.backups %}
+                                            <tr>
+                                                <td>
+                                                    <div class="d-flex align-items-center">
+                                                        <i class="fas fa-file-archive text-primary me-2"></i>
+                                                        <span class="fw-medium">{{ backup.filename }}</span>
+                                                    </div>
+                                                </td>
+                                                <td>{{ backup.size|filesizeformat }}</td>
+                                                <td>{{ backup.created_at|date:"M d, Y H:i" }}</td>
+                                                <td>
+                                                    <div class="btn-group btn-group-sm">
+                                                        <button type="button" class="btn btn-outline-primary" 
+                                                                onclick="downloadBackup('{{ dest_name }}', '{{ backup.filename }}')">
+                                                            <i class="fas fa-download me-1"></i>Download
+                                                        </button>
+                                                        {% if dest_name == 'local' and user.userprofile.is_super_owner %}
+                                                        <button type="button" class="btn btn-outline-success" 
+                                                                onclick="syncToCloud('{{ backup.filename }}')">
+                                                            <i class="fas fa-cloud-upload-alt me-1"></i>Sync
+                                                        </button>
+                                                        {% endif %}
+                                                        <button type="button" class="btn btn-outline-danger" 
+                                                                onclick="deleteBackup('{{ dest_name }}', '{{ backup.filename }}')">
+                                                            <i class="fas fa-trash me-1"></i>Delete
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                {% else %}
+                                <div class="text-center py-4">
+                                    <i class="fas fa-archive fa-3x text-muted mb-3"></i>
+                                    <h5>No Backups Found</h5>
+                                    <p class="text-muted">No backups available in {{ dest_data.name }}</p>
+                                </div>
+                                {% endif %}
+                            {% else %}
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    <strong>{{ dest_data.name }} Unavailable</strong>
+                                    <br>This destination is currently offline or not configured properly.
+                                    {% if dest_data.error %}
+                                    <br><small>Error: {{ dest_data.error }}</small>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Backup Modal -->
+<div class="modal fade" id="createBackupModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Create Production Backup</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="backupForm">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Backup Type</label>
+                                <select class="form-select" id="backup-type" name="backup_type">
+                                    {% if user.userprofile.is_super_owner %}
+                                        <option value="full">Full System Backup</option>
+                                        <option value="basic">Basic System Backup</option>
+                                    {% else %}
+                                        <option value="company">Company Data</option>
+                                        <option value="user">Personal Data</option>
+                                    {% endif %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Backup Destinations</label>
+                                <div class="border rounded p-3">
+                                    {% for destination in backup_destinations %}
+                                    {% if destination.available %}
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" 
+                                               value="{{ destination.name }}" 
+                                               id="dest_{{ destination.name }}"
+                                               name="destinations"
+                                               {% if destination.name == 'local' %}checked{% endif %}
+                                               {% if destination.name != 'local' and not user.userprofile.is_super_owner %}disabled{% endif %}>
+                                        <label class="form-check-label d-flex align-items-center" for="dest_{{ destination.name }}">
+                                            {% if destination.name == 'local' %}
+                                                <i class="fas fa-server me-2 text-primary"></i>
+                                            {% elif destination.name == 'google_drive' %}
+                                                <i class="fab fa-google-drive me-2 text-success"></i>
+                                            {% elif destination.name == 'database' %}
+                                                <i class="fas fa-database me-2 text-info"></i>
+                                            {% endif %}
+                                            {{ destination.display_name }}
+                                            {% if destination.name != 'local' and not user.userprofile.is_super_owner %}
+                                                <small class="text-muted ms-2">(Super Owner only)</small>
+                                            {% endif %}
+                                        </label>
+                                    </div>
+                                    {% endif %}
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Production Backup Features:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li><strong>Local:</strong> Stored on server filesystem (fast, always available)</li>
+                            {% if user.userprofile.is_super_owner %}
+                            <li><strong>Google Drive:</strong> Cloud storage with unlimited retention</li>
+                            <li><strong>Database:</strong> Raw database dumps in JSON and SQL formats</li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="createProductionBackup()">
+                    <i class="fas fa-rocket me-2"></i>Create Backup
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Modal -->
+<div class="modal fade" id="loadingModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-body text-center py-4">
+                <div class="spinner-border text-primary mb-3" role="status"></div>
+                <div>Creating backup...</div>
+                <div class="text-muted" id="loading-message">Please wait, this may take several minutes</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function createProductionBackup() {
+    const form = document.getElementById('backupForm');
+    const formData = new FormData(form);
+    
+    // Get selected destinations
+    const destinations = [];
+    document.querySelectorAll('input[name="destinations"]:checked').forEach(input => {
+        destinations.push(input.value);
+    });
+    
+    if (destinations.length === 0) {
+        alert('Please select at least one backup destination.');
+        return;
+    }
+    
+    // Show loading modal
+    const createModal = bootstrap.Modal.getInstance(document.getElementById('createBackupModal'));
+    const loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
+    
+    createModal.hide();
+    loadingModal.show();
+    
+    // Prepare request data
+    const data = new FormData();
+    data.append('backup_type', formData.get('backup_type'));
+    destinations.forEach(dest => data.append('destinations', dest));
+    data.append('csrfmiddlewaretoken', getCsrfToken());
+    
+    fetch('{% url "core:create_backup" %}', {
+        method: 'POST',
+        body: data
+    })
+    .then(response => response.json())
+    .then(result => {
+        loadingModal.hide();
+        
+        if (result.success) {
+            showAlert('success', `Backup created successfully! Stored in ${result.destinations.length} destination(s).`);
+            setTimeout(() => location.reload(), 2000);
+        } else {
+            showAlert('danger', 'Backup creation failed: ' + result.error);
+        }
+    })
+    .catch(error => {
+        loadingModal.hide();
+        showAlert('danger', 'Network error: ' + error.message);
+    });
+}
+
+function downloadBackup(destination, filename) {
+    const url = `{% url "core:download_backup" "FILENAME" %}`.replace('FILENAME', filename);
+    window.open(url, '_blank');
+}
+
+function deleteBackup(destination, filename) {
+    if (!confirm(`Delete backup "${filename}" from ${destination}?\\nThis action cannot be undone.`)) {
+        return;
+    }
+    
+    fetch(`{% url "core:delete_backup" "FILENAME" %}`.replace('FILENAME', filename), {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCsrfToken(),
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            destination: destination
+        })
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            showAlert('success', 'Backup deleted successfully!');
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showAlert('danger', 'Delete failed: ' + result.error);
+        }
+    })
+    .catch(error => {
+        showAlert('danger', 'Network error: ' + error.message);
+    });
+}
+
+{% if user.userprofile.is_super_owner %}
+function syncToCloud(filename) {
+    if (!confirm(`Sync "${filename}" to cloud storage?`)) {
+        return;
+    }
+    
+    fetch('{% url "core:sync_backup_to_cloud" %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCsrfToken(),
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            backup_filename: filename,
+            destinations: ['google_drive']
+        })
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            showAlert('success', 'Backup synced to cloud successfully!');
+        } else {
+            showAlert('danger', 'Sync failed: ' + result.error);
+        }
+    })
+    .catch(error => {
+        showAlert('danger', 'Network error: ' + error.message);
+    });
+}
+{% endif %}
+
+function testDestinations() {
+    document.getElementById('loading-message').textContent = 'Testing backup destinations...';
+    const loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
+    loadingModal.show();
+    
+    fetch('{% url "core:test_backup_destinations" %}')
+        .then(response => response.json())
+        .then(result => {
+            loadingModal.hide();
+            
+            let message = 'Destination Test Results:\\n';
+            result.forEach(dest => {
+                message += `${dest.display_name}: ${dest.available ? 'Available' : 'Offline'}\\n`;
+            });
+            
+            alert(message);
+            setTimeout(() => location.reload(), 1000);
+        })
+        .catch(error => {
+            loadingModal.hide();
+            showAlert('danger', 'Test failed: ' + error.message);
+        });
+}
+
+function showAlert(type, message) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    alertDiv.style.top = '20px';
+    alertDiv.style.right = '20px';
+    alertDiv.style.zIndex = '9999';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(alertDiv);
+    
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.parentNode.removeChild(alertDiv);
+        }
+    }, 5000);
+}
+
+function getCsrfToken() {
+    return document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+           document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ||
+           '{{ csrf_token }}';
+}
+
+// Auto-refresh backup status every 30 seconds
+setInterval(() => {
+    if (document.visibilityState === 'visible') {
+        location.reload();
+    }
+}, 30000);
+</script>
+
+<style>
+.card-header-tabs {
+    border-bottom: none;
+}
+
+.card-header-tabs .nav-link {
+    border: none;
+    border-bottom: 2px solid transparent;
+}
+
+.card-header-tabs .nav-link.active {
+    background: none;
+    border-color: var(--bs-primary);
+    color: var(--bs-primary);
+}
+
+.btn-group-sm .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+}
+
+.form-check-input:disabled {
+    opacity: 0.5;
+}
+
+.border-success {
+    border-color: #198754 !important;
+}
+
+.border-warning {
+    border-color: #ffc107 !important;
+}
+</style>
+{% endblock %}

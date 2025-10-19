@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>New Registration Request</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: #dc3545; color: white; padding: 20px; text-align: center; }
+        .content { padding: 20px; background: #f8f9fa; }
+        .footer { padding: 20px; text-align: center; color: #6c757d; font-size: 12px; }
+        .button { display: inline-block; padding: 12px 24px; background: #007bff; color: white; text-decoration: none; border-radius: 4px; }
+        .alert-box { background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 4px; margin: 20px 0; }
+        .details { background: white; padding: 15px; border-radius: 4px; margin: 15px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔔 New Registration Request</h1>
+        </div>
+        
+        <div class="content">
+            <div class="alert-box">
+                <strong>Action Required:</strong> A new registration request requires your review and approval.
+            </div>
+            
+            <div class="details">
+                <h3>Request Details</h3>
+                <p><strong>Type:</strong> {{ activation_request.get_request_type_display }}</p>
+                <p><strong>Applicant:</strong> {{ activation_request.first_name }} {{ activation_request.last_name }}</p>
+                <p><strong>Email:</strong> {{ activation_request.email }}</p>
+                {% if activation_request.company_name %}
+                <p><strong>Company:</strong> {{ activation_request.company_name }}</p>
+                {% endif %}
+                <p><strong>Submitted:</strong> {{ activation_request.created_at|date:"F j, Y \a\t g:i A" }}</p>
+                <p><strong>Status:</strong> {{ activation_request.get_status_display }}</p>
+            </div>
+            
+            <p>Please review this request and take appropriate action.</p>
+            
+            <p><a href="{{ admin_url }}" class="button">Review in Admin Panel</a></p>
+            
+            <p>You can approve, reject, or request additional documentation from the applicant.</p>
+        </div>
+        
+        <div class="footer">
+            <p>Construction Tracker Admin Notification<br>
+            This email was sent to all Super Owners with activation permissions.</p>
+        </div>
+    </div>
+</body>
+</html>

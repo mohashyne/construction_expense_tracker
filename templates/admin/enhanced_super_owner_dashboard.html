@@ -1,0 +1,1129 @@
+{% extends 'super_owner_base.html' %}
+
+{% block title %}Super Owner Control Panel{% endblock %}
+
+{% block page_title %}System Dashboard{% endblock %}
+{% block page_subtitle %}Complete system management and oversight{% endblock %}
+
+{% block main_content %}
+<div class="container-fluid mt-4">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2><i class="fas fa-crown text-warning"></i> Super Owner Control Panel</h2>
+                    <p class="text-muted mb-0">Complete system management and oversight</p>
+                </div>
+                <div>
+                    <span class="badge bg-warning fs-6 me-2">
+                        {% if request.user.super_owner_profile.is_primary_owner %}
+                            Primary Owner
+                        {% else %}
+                            {{ request.user.super_owner_profile.get_delegation_level_display }}
+                        {% endif %}
+                    </span>
+                    <a href="{% url 'admin:index' %}" class="btn btn-outline-dark">
+                        <i class="fas fa-cogs"></i> Django Admin
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Overview -->
+    <div class="row mb-4">
+        <div class="col-md-2">
+            <div class="card bg-warning text-white h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-clock fa-2x mb-2"></i>
+                    <h4>{{ pending_requests }}</h4>
+                    <small>Pending Requests</small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-2">
+            <div class="card bg-success text-white h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-building fa-2x mb-2"></i>
+                    <h4>{{ total_companies }}</h4>
+                    <small>Active Companies</small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-2">
+            <div class="card bg-info text-white h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-user fa-2x mb-2"></i>
+                    <h4>{{ total_individuals }}</h4>
+                    <small>Individual Users</small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-2">
+            <div class="card bg-primary text-white h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-users fa-2x mb-2"></i>
+                    <h4>{{ total_users }}</h4>
+                    <small>Total System Users</small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-2">
+            <div class="card bg-secondary text-white h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-check fa-2x mb-2"></i>
+                    <h4>{{ approved_today }}</h4>
+                    <small>Approved Today</small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-2">
+            <div class="card bg-danger text-white h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-times fa-2x mb-2"></i>
+                    <h4>{{ rejected_today }}</h4>
+                    <small>Rejected Today</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Management Tabs -->
+    <div class="row">
+        <div class="col-12">
+            <ul class="nav nav-pills mb-4" id="managementTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="registrations-tab" data-bs-toggle="pill" data-bs-target="#registrations" type="button">
+                        <i class="fas fa-clipboard-list"></i> Registration Requests
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="companies-tab" data-bs-toggle="pill" data-bs-target="#companies" type="button">
+                        <i class="fas fa-building"></i> Companies Management
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="individuals-tab" data-bs-toggle="pill" data-bs-target="#individuals" type="button">
+                        <i class="fas fa-user"></i> Individual Users
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="system-tab" data-bs-toggle="pill" data-bs-target="#system" type="button">
+                        <i class="fas fa-cogs"></i> System Management
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="analytics-tab" data-bs-toggle="pill" data-bs-target="#analytics" type="button">
+                        <i class="fas fa-chart-bar"></i> Analytics
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content" id="managementTabsContent">
+                <!-- Registration Requests Tab -->
+                <div class="tab-pane fade show active" id="registrations" role="tabpanel">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5><i class="fas fa-clipboard-list"></i> Registration Requests Management</h5>
+                            <div>
+                                <select class="form-select form-select-sm d-inline-block w-auto me-2" id="statusFilter">
+                                    <option value="">All Statuses</option>
+                                    <option value="pending">Pending</option>
+                                    <option value="under_review">Under Review</option>
+                                    <option value="approved">Approved</option>
+                                    <option value="rejected">Rejected</option>
+                                </select>
+                                <select class="form-select form-select-sm d-inline-block w-auto" id="typeFilter">
+                                    <option value="">All Types</option>
+                                    <option value="company_registration">Companies</option>
+                                    <option value="individual_registration">Individuals</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            {% if recent_requests %}
+                                <div class="table-responsive">
+                                    <table class="table table-hover" id="registrationsTable">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>
+                                                    <input type="checkbox" id="selectAll">
+                                                </th>
+                                                <th>Date</th>
+                                                <th>Type</th>
+                                                <th>Name/Company</th>
+                                                <th>Email</th>
+                                                <th>Phone</th>
+                                                <th>Status</th>
+                                                <th>Documents</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for request in recent_requests %}
+                                                <tr data-status="{{ request.status }}" data-type="{{ request.request_type }}">
+                                                    <td>
+                                                        <input type="checkbox" class="row-checkbox" value="{{ request.id }}">
+                                                    </td>
+                                                    <td>{{ request.created_at|date:"M d, Y" }}</td>
+                                                    <td>
+                                                        <span class="badge {% if request.request_type == 'company_registration' %}bg-primary{% else %}bg-info{% endif %}">
+                                                            {% if request.request_type == 'company_registration' %}Company{% else %}Individual{% endif %}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <strong>
+                                                            {% if request.request_type == 'company_registration' %}
+                                                                {{ request.company_name|default:"N/A" }}
+                                                            {% else %}
+                                                                {{ request.first_name }} {{ request.last_name }}
+                                                            {% endif %}
+                                                        </strong>
+                                                        {% if request.request_type == 'company_registration' %}
+                                                            <br><small class="text-muted">{{ request.first_name }} {{ request.last_name }}</small>
+                                                        {% endif %}
+                                                    </td>
+                                                    <td>{{ request.email }}</td>
+                                                    <td>{{ request.phone|default:"-" }}</td>
+                                                    <td>
+                                                        <span class="badge 
+                                                            {% if request.status == 'approved' %}bg-success
+                                                            {% elif request.status == 'rejected' %}bg-danger
+                                                            {% elif request.status == 'under_review' %}bg-warning
+                                                            {% else %}bg-secondary{% endif %}">
+                                                            {{ request.get_status_display }}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="badge bg-light text-dark">{{ request.document_uploads.count }} docs</span>
+                                                    </td>
+                                                    <td>
+                                                        <div class="btn-group btn-group-sm" role="group">
+                                                            <a href="{% url 'core:activation_request_detail' request.id %}" 
+                                                               class="btn btn-outline-primary btn-sm" title="View Details">
+                                                                <i class="fas fa-eye"></i>
+                                                            </a>
+                                                            {% if request.status == 'pending' %}
+                                                                <button class="btn btn-outline-success btn-sm" 
+                                                                        onclick="quickAction('approve', {{ request.id }})" title="Quick Approve">
+                                                                    <i class="fas fa-check"></i>
+                                                                </button>
+                                                                <button class="btn btn-outline-danger btn-sm" 
+                                                                        onclick="quickAction('reject', {{ request.id }})" title="Quick Reject">
+                                                                    <i class="fas fa-times"></i>
+                                                                </button>
+                                                            {% endif %}
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                                <!-- Bulk Actions -->
+                                <div class="mt-3">
+                                    <button class="btn btn-success btn-sm" onclick="bulkAction('approve')" disabled id="bulkApprove">
+                                        <i class="fas fa-check"></i> Bulk Approve
+                                    </button>
+                                    <button class="btn btn-danger btn-sm" onclick="bulkAction('reject')" disabled id="bulkReject">
+                                        <i class="fas fa-times"></i> Bulk Reject
+                                    </button>
+                                    <button class="btn btn-warning btn-sm" onclick="bulkAction('review')" disabled id="bulkReview">
+                                        <i class="fas fa-search"></i> Mark for Review
+                                    </button>
+                                </div>
+                            {% else %}
+                                <div class="text-center py-5">
+                                    <i class="fas fa-inbox fa-4x text-muted mb-3"></i>
+                                    <h6>No Registration Requests</h6>
+                                    <p class="text-muted">Registration requests will appear here when users submit them.</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Companies Management Tab -->
+                <div class="tab-pane fade" id="companies" role="tabpanel">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5><i class="fas fa-building"></i> Companies Management</h5>
+                            <div>
+                                <button class="btn btn-primary btn-sm" onclick="window.location='{% url 'admin:core_company_add' %}'">
+                                    <i class="fas fa-plus"></i> Add Company
+                                </button>
+                                <button class="btn btn-outline-secondary btn-sm" onclick="exportData('companies')">
+                                    <i class="fas fa-download"></i> Export
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            {% if companies %}
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Company Name</th>
+                                                <th>Registration Number</th>
+                                                <th>Owner</th>
+                                                <th>Email</th>
+                                                <th>Members</th>
+                                                <th>Created</th>
+                                                <th>Status</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for company in companies %}
+                                                <tr>
+                                                    <td>
+                                                        <strong>{{ company.name }}</strong>
+                                                        {% if company.website %}
+                                                            <br><small><a href="{{ company.website }}" target="_blank">{{ company.website }}</a></small>
+                                                        {% endif %}
+                                                    </td>
+                                                    <td>{{ company.registration_number|default:"-" }}</td>
+                                                    <td>
+                                                        {% if company.owner %}
+                                                            {{ company.owner.get_full_name|default:company.owner.username }}
+                                                        {% else %}
+                                                            <span class="text-muted">No owner assigned</span>
+                                                        {% endif %}
+                                                    </td>
+                                                    <td>
+                                                        {% if company.owner %}
+                                                            {{ company.owner.email }}
+                                                        {% else %}
+                                                            {{ company.email }}
+                                                        {% endif %}
+                                                    </td>
+                                                    <td>
+                                                        <span class="badge bg-info">{{ company.memberships.count }} members</span>
+                                                    </td>
+                                                    <td>{{ company.created_at|date:"M d, Y" }}</td>
+                                                    <td>
+                                                        <span class="badge {% if company.is_active %}bg-success{% else %}bg-danger{% endif %}">
+                                                            {% if company.is_active %}Active{% else %}Inactive{% endif %}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <div class="btn-group btn-group-sm">
+                                                            <a href="{% url 'admin:core_company_change' company.id %}" 
+                                                               class="btn btn-outline-primary btn-sm">
+                                                                <i class="fas fa-edit"></i>
+                                                            </a>
+                                                            <button class="btn btn-outline-info btn-sm" 
+                                                                    onclick="viewCompanyDetails({{ company.id }})">
+                                                                <i class="fas fa-eye"></i>
+                                                            </button>
+                                                            <button class="btn btn-outline-warning btn-sm" 
+                                                                    onclick="toggleCompanyStatus({{ company.id }}, {{ company.is_active|yesno:'false,true' }})">
+                                                                <i class="fas fa-{% if company.is_active %}pause{% else %}play{% endif %}"></i>
+                                                            </button>
+                                                            <button class="btn btn-outline-danger btn-sm" 
+                                                                    onclick="deleteCompany({{ company.id }})">
+                                                                <i class="fas fa-trash"></i>
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <div class="text-center py-5">
+                                    <i class="fas fa-building fa-4x text-muted mb-3"></i>
+                                    <h6>No Companies</h6>
+                                    <p class="text-muted">Approved company registrations will appear here.</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Individual Users Tab -->
+                <div class="tab-pane fade" id="individuals" role="tabpanel">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5><i class="fas fa-user"></i> Individual Users Management</h5>
+                            <div>
+                                <button class="btn btn-primary btn-sm" onclick="window.location='{% url 'admin:auth_user_add' %}'">
+                                    <i class="fas fa-plus"></i> Add User
+                                </button>
+                                <button class="btn btn-outline-secondary btn-sm" onclick="exportData('users')">
+                                    <i class="fas fa-download"></i> Export
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            {% if individual_users %}
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Name</th>
+                                                <th>Username</th>
+                                                <th>Email</th>
+                                                <th>Phone</th>
+                                                <th>Account Type</th>
+                                                <th>Joined</th>
+                                                <th>Status</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for user in individual_users %}
+                                                <tr>
+                                                    <td>
+                                                        <div class="d-flex align-items-center">
+                                                            {% if user.userprofile.avatar %}
+                                                                <img src="{{ user.userprofile.avatar.url }}" 
+                                                                     class="rounded-circle me-2" width="32" height="32">
+                                                            {% else %}
+                                                                <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center me-2" 
+                                                                     style="width: 32px; height: 32px; font-size: 14px;">
+                                                                    {{ user.first_name.0|default:user.username.0|upper }}
+                                                                </div>
+                                                            {% endif %}
+                                                            <div>
+                                                                <strong>{{ user.get_full_name|default:user.username }}</strong>
+                                                                {% if user.is_staff %}
+                                                                    <span class="badge bg-warning ms-2">Staff</span>
+                                                                {% endif %}
+                                                                {% if user.is_superuser %}
+                                                                    <span class="badge bg-danger ms-2">Superuser</span>
+                                                                {% endif %}
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td>{{ user.username }}</td>
+                                                    <td>{{ user.email }}</td>
+                                                    <td>{{ user.userprofile.phone|default:"-" }}</td>
+                                                    <td>
+                                                        <span class="badge bg-info">
+                                                            {{ user.userprofile.get_account_type_display|default:"Individual" }}
+                                                        </span>
+                                                    </td>
+                                                    <td>{{ user.date_joined|date:"M d, Y" }}</td>
+                                                    <td>
+                                                        <span class="badge {% if user.is_active %}bg-success{% else %}bg-danger{% endif %}">
+                                                            {% if user.is_active %}Active{% else %}Inactive{% endif %}
+                                                        </span>
+                                                        {% if user.userprofile.is_verified %}
+                                                            <span class="badge bg-success">Verified</span>
+                                                        {% endif %}
+                                                    </td>
+                                                    <td>
+                                                        <div class="btn-group btn-group-sm">
+                                                            <a href="{% url 'admin:auth_user_change' user.id %}" 
+                                                               class="btn btn-outline-primary btn-sm">
+                                                                <i class="fas fa-edit"></i>
+                                                            </a>
+                                                            <button class="btn btn-outline-warning btn-sm" 
+                                                                    onclick="toggleUserStatus({{ user.id }}, {{ user.is_active|yesno:'false,true' }})">
+                                                                <i class="fas fa-{% if user.is_active %}pause{% else %}play{% endif %}"></i>
+                                                            </button>
+                                                            <button class="btn btn-outline-danger btn-sm" 
+                                                                    onclick="deleteUser({{ user.id }})">
+                                                                <i class="fas fa-trash"></i>
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <div class="text-center py-5">
+                                    <i class="fas fa-user fa-4x text-muted mb-3"></i>
+                                    <h6>No Individual Users</h6>
+                                    <p class="text-muted">Individual user accounts will appear here.</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- System Management Tab -->
+                <div class="tab-pane fade" id="system" role="tabpanel">
+                    <div class="row">
+                        <!-- Super Owners Management -->
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h6><i class="fas fa-crown"></i> Super Owners</h6>
+                                    <button class="btn btn-primary btn-sm" onclick="createSuperOwner()">
+                                        <i class="fas fa-plus"></i> Add Super Owner
+                                    </button>
+                                </div>
+                                <div class="card-body">
+                                    {% if super_owners %}
+                                        <div class="table-responsive">
+                                            <table class="table table-sm">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Name</th>
+                                                        <th>Type</th>
+                                                        <th>Actions</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for owner in super_owners %}
+                                                        <tr>
+                                                            <td>
+                                                                <strong>{{ owner.user.get_full_name|default:owner.user.username }}</strong>
+                                                                {% if owner.is_primary_owner %}
+                                                                    <br><small class="text-warning"><i class="fas fa-crown"></i> Primary</small>
+                                                                {% endif %}
+                                                            </td>
+                                                            <td>
+                                                                <span class="badge {% if owner.is_primary_owner %}bg-warning{% else %}bg-secondary{% endif %}">
+                                                                    {{ owner.get_delegation_level_display }}
+                                                                </span>
+                                                            </td>
+                                                            <td>
+                                                                <div class="btn-group btn-group-sm">
+                                                                    <a href="{% url 'admin:core_superowner_change' owner.id %}" 
+                                                                       class="btn btn-outline-primary btn-sm">
+                                                                        <i class="fas fa-edit"></i>
+                                                                    </a>
+                                                                    {% if not owner.is_primary_owner %}
+                                                                        <button class="btn btn-outline-danger btn-sm" 
+                                                                                onclick="revokeSuperOwner({{ owner.id }})">
+                                                                            <i class="fas fa-times"></i>
+                                                                        </button>
+                                                                    {% endif %}
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- System Settings -->
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-header">
+                                    <h6><i class="fas fa-cogs"></i> System Settings</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="list-group list-group-flush">
+                                        <a href="{% url 'admin:index' %}" class="list-group-item list-group-item-action">
+                                            <i class="fas fa-cogs"></i> Django Admin Panel
+                                        </a>
+                                        <a href="{% url 'admin:auth_user_changelist' %}" class="list-group-item list-group-item-action">
+                                            <i class="fas fa-users"></i> All Users Management
+                                        </a>
+                                        <a href="{% url 'admin:core_company_changelist' %}" class="list-group-item list-group-item-action">
+                                            <i class="fas fa-building"></i> Companies Admin
+                                        </a>
+                                        <a href="#" onclick="systemBackup()" class="list-group-item list-group-item-action">
+                                            <i class="fas fa-download"></i> System Backup
+                                        </a>
+                                        <a href="#" onclick="systemLogs()" class="list-group-item list-group-item-action">
+                                            <i class="fas fa-file-alt"></i> System Logs
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Analytics Tab -->
+                <div class="tab-pane fade" id="analytics" role="tabpanel">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6><i class="fas fa-chart-line"></i> Registration Trends</h6>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="registrationChart" width="400" height="200"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6><i class="fas fa-pie-chart"></i> Account Distribution</h6>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="accountTypeChart" width="300" height="300"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6><i class="fas fa-table"></i> System Statistics</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-sm">
+                                            <tbody>
+                                                <tr>
+                                                    <td><strong>Total Registrations (All Time)</strong></td>
+                                                    <td>{{ total_registrations }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Approval Rate</strong></td>
+                                                    <td>{{ approval_rate|floatformat:1 }}%</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Average Processing Time</strong></td>
+                                                    <td>{{ avg_processing_time|floatformat:1 }} days</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Most Active Company</strong></td>
+                                                    <td>{{ most_active_company|default:"N/A" }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>System Uptime</strong></td>
+                                                    <td>{{ system_uptime|default:"N/A" }}</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap Modal for Actions -->
+<div class="modal fade" id="actionModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="actionModalTitle">Confirm Action</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="actionModalBody">
+                <!-- Dynamic content -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirmActionBtn">Confirm</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Enhanced JavaScript for Super Owner Dashboard
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize filters
+    initializeFilters();
+    
+    // Initialize bulk selection
+    initializeBulkSelection();
+    
+    // Initialize charts if analytics tab is active
+    if (document.getElementById('analytics-tab').classList.contains('active')) {
+        initializeCharts();
+    }
+});
+
+// Filter functionality
+function initializeFilters() {
+    const statusFilter = document.getElementById('statusFilter');
+    const typeFilter = document.getElementById('typeFilter');
+    
+    if (statusFilter) {
+        statusFilter.addEventListener('change', filterTable);
+    }
+    
+    if (typeFilter) {
+        typeFilter.addEventListener('change', filterTable);
+    }
+}
+
+function filterTable() {
+    const statusFilter = document.getElementById('statusFilter').value;
+    const typeFilter = document.getElementById('typeFilter').value;
+    const rows = document.querySelectorAll('#registrationsTable tbody tr');
+    
+    rows.forEach(row => {
+        const status = row.dataset.status;
+        const type = row.dataset.type;
+        
+        const statusMatch = !statusFilter || status === statusFilter;
+        const typeMatch = !typeFilter || type === typeFilter;
+        
+        row.style.display = statusMatch && typeMatch ? '' : 'none';
+    });
+}
+
+// Bulk selection functionality
+function initializeBulkSelection() {
+    const selectAll = document.getElementById('selectAll');
+    const rowCheckboxes = document.querySelectorAll('.row-checkbox');
+    const bulkButtons = ['bulkApprove', 'bulkReject', 'bulkReview'];
+    
+    if (selectAll) {
+        selectAll.addEventListener('change', function() {
+            rowCheckboxes.forEach(checkbox => {
+                checkbox.checked = this.checked;
+            });
+            updateBulkButtons();
+        });
+    }
+    
+    rowCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', updateBulkButtons);
+    });
+    
+    function updateBulkButtons() {
+        const checkedBoxes = document.querySelectorAll('.row-checkbox:checked');
+        const hasSelection = checkedBoxes.length > 0;
+        
+        bulkButtons.forEach(btnId => {
+            const btn = document.getElementById(btnId);
+            if (btn) {
+                btn.disabled = !hasSelection;
+            }
+        });
+    }
+}
+
+// Quick actions
+function quickAction(action, requestId) {
+    const actionModal = new bootstrap.Modal(document.getElementById('actionModal'));
+    const titleEl = document.getElementById('actionModalTitle');
+    const bodyEl = document.getElementById('actionModalBody');
+    const confirmBtn = document.getElementById('confirmActionBtn');
+    
+    titleEl.textContent = `${action.charAt(0).toUpperCase() + action.slice(1)} Request`;
+    bodyEl.innerHTML = `Are you sure you want to ${action} this registration request?`;
+    
+    confirmBtn.onclick = function() {
+        performAction(action, [requestId]);
+        actionModal.hide();
+    };
+    
+    actionModal.show();
+}
+
+function bulkAction(action) {
+    const checkedBoxes = document.querySelectorAll('.row-checkbox:checked');
+    const requestIds = Array.from(checkedBoxes).map(cb => cb.value);
+    
+    if (requestIds.length === 0) return;
+    
+    const actionModal = new bootstrap.Modal(document.getElementById('actionModal'));
+    const titleEl = document.getElementById('actionModalTitle');
+    const bodyEl = document.getElementById('actionModalBody');
+    const confirmBtn = document.getElementById('confirmActionBtn');
+    
+    titleEl.textContent = `Bulk ${action.charAt(0).toUpperCase() + action.slice(1)}`;
+    bodyEl.innerHTML = `Are you sure you want to ${action} ${requestIds.length} selected request(s)?`;
+    
+    confirmBtn.onclick = function() {
+        performAction(action, requestIds);
+        actionModal.hide();
+    };
+    
+    actionModal.show();
+}
+
+function performAction(action, requestIds) {
+    // This would make AJAX calls to your Django views
+    fetch('/super-owner/bulk-action/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken()
+        },
+        body: JSON.stringify({
+            action: action,
+            request_ids: requestIds
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred. Please try again.');
+    });
+}
+
+// Company management functions
+function toggleCompanyStatus(companyId, newStatus) {
+    if (confirm('Are you sure you want to change the company status?')) {
+        // AJAX call to toggle company status
+        console.log('Toggling company', companyId, 'to', newStatus);
+    }
+}
+
+function deleteCompany(companyId) {
+    if (confirm('Are you sure you want to delete this company? This action cannot be undone.')) {
+        // AJAX call to delete company
+        console.log('Deleting company', companyId);
+    }
+}
+
+function viewCompanyDetails(companyId) {
+    window.open(`/admin/core/company/${companyId}/change/`, '_blank');
+}
+
+// User management functions
+function toggleUserStatus(userId, newStatus) {
+    if (confirm('Are you sure you want to change the user status?')) {
+        // AJAX call to toggle user status
+        console.log('Toggling user', userId, 'to', newStatus);
+    }
+}
+
+function deleteUser(userId) {
+    if (confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+        // AJAX call to delete user
+        console.log('Deleting user', userId);
+    }
+}
+
+// System management functions
+function createSuperOwner() {
+    window.open('/admin/core/superowner/add/', '_blank');
+}
+
+function revokeSuperOwner(ownerId) {
+    if (confirm('Are you sure you want to revoke super owner privileges? This action cannot be undone.')) {
+        // AJAX call to revoke super owner
+        console.log('Revoking super owner', ownerId);
+    }
+}
+
+function systemBackup() {
+    alert('System backup functionality would be implemented here.');
+}
+
+function systemLogs() {
+    // System logs functionality - check application logs
+    alert('System logs can be found in the application log files. Check the logs directory for detailed system activity.');
+}
+
+// Export functionality
+function exportData(type) {
+    window.location.href = `/super-owner/export/${type}/`;
+}
+
+// Chart initialization
+function initializeCharts() {
+    // Registration trends chart
+    const ctx1 = document.getElementById('registrationChart');
+    if (ctx1) {
+        new Chart(ctx1, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                datasets: [{
+                    label: 'Registrations',
+                    data: [12, 19, 3, 5, 2, 3],
+                    borderColor: 'rgb(75, 192, 192)',
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+    
+    // Account type distribution chart
+    const ctx2 = document.getElementById('accountTypeChart');
+    if (ctx2) {
+        new Chart(ctx2, {
+            type: 'pie',
+            data: {
+                labels: ['Companies', 'Individuals'],
+                datasets: [{
+                    data: [{{ total_companies }}, {{ total_individuals }}],
+                    backgroundColor: ['#007bff', '#17a2b8']
+                }]
+            },
+            options: {
+                responsive: true
+            }
+        });
+    }
+}
+
+// Utility functions
+function getCsrfToken() {
+    return document.querySelector('[name=csrfmiddlewaretoken]').value;
+}
+
+// Tab change handler to initialize charts when analytics tab is shown
+document.addEventListener('shown.bs.tab', function (event) {
+    if (event.target.id === 'analytics-tab') {
+        initializeCharts();
+    }
+});
+</script>
+
+<style>
+/* Enhanced Professional Styling for Dashboard */
+.nav-pills .nav-link {
+    color: #6c757d;
+    border-radius: 8px;
+    margin-right: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    border: 2px solid transparent;
+}
+
+.nav-pills .nav-link:hover {
+    background-color: #f8f9fa;
+    color: #495057;
+    transform: translateY(-1px);
+}
+
+.nav-pills .nav-link.active {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    color: white;
+    box-shadow: 0 4px 6px -1px rgba(0, 123, 255, 0.3);
+    border-color: #007bff;
+}
+
+.table th {
+    border-top: none;
+    font-weight: 600;
+    font-size: 0.875rem;
+    background: #f8f9fa;
+    padding: 1rem;
+    color: #495057;
+}
+
+.table td {
+    padding: 1rem;
+    vertical-align: middle;
+}
+
+.badge {
+    font-size: 0.75rem;
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    font-weight: 600;
+}
+
+.card {
+    border: none;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.card:hover {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    transform: translateY(-2px);
+}
+
+.card-header {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-bottom: 1px solid #dee2e6;
+    font-weight: 600;
+    padding: 1.25rem 1.5rem;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+.btn-group-sm .btn {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
+    border-radius: 6px;
+    margin-right: 2px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.btn-group-sm .btn:hover {
+    transform: translateY(-1px);
+}
+
+.table-responsive {
+    border-radius: 8px;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.list-group-item {
+    border: none;
+    padding: 1rem 1.25rem;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    background: #f9fafb;
+    transition: all 0.2s ease;
+}
+
+.list-group-item:hover {
+    background: #f3f4f6;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Statistics Cards Enhancement */
+.container-fluid .row .col-md-2 .card {
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s ease;
+}
+
+.container-fluid .row .col-md-2 .card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 15px -3px rgba(0, 0, 0, 0.2);
+}
+
+.card-body.text-center {
+    padding: 1.5rem 1rem;
+}
+
+.card-body.text-center i {
+    margin-bottom: 0.75rem;
+}
+
+.card-body.text-center h4 {
+    font-weight: 700;
+    font-size: 1.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.card-body.text-center small {
+    font-weight: 500;
+    font-size: 0.85rem;
+    opacity: 0.9;
+}
+
+/* Professional Form Elements */
+.form-select, .form-select-sm {
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    color: #1f2937;
+    background: #ffffff;
+    transition: all 0.2s ease;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 16px 12px;
+}
+
+.form-select:focus, .form-select-sm:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    outline: none;
+}
+
+/* Action Buttons Enhancement */
+.btn-sm {
+    padding: 0.6rem 1rem;
+    font-size: 0.85rem;
+    border-radius: 6px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.btn-outline-primary, .btn-outline-success, .btn-outline-danger, .btn-outline-info, .btn-outline-warning {
+    border-width: 2px;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+}
+
+/* Container spacing improvements */
+.container-fluid {
+    padding: 1.5rem;
+}
+
+.mb-4 {
+    margin-bottom: 2rem !important;
+}
+
+/* Tab content spacing */
+.tab-content {
+    margin-top: 1rem;
+}
+
+.tab-pane {
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Professional spacing and alignment */
+.d-flex.justify-content-between.align-items-center {
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.d-flex.justify-content-between.align-items-center > div {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    .container-fluid {
+        padding: 1rem;
+    }
+    
+    .card-body {
+        padding: 1rem;
+    }
+    
+    .card-header {
+        padding: 1rem;
+    }
+    
+    .nav-pills .nav-link {
+        padding: 0.6rem 1rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .table-responsive {
+        font-size: 0.85rem;
+    }
+}
+</style>
+{% endblock %}

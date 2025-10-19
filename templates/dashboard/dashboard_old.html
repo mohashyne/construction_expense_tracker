@@ -1,0 +1,398 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - ConstructPro{% endblock %}
+
+{% block content %}
+<!-- Page header -->
+<div class="sm:flex sm:items-center">
+    <div class="sm:flex-auto">
+        <h1 class="text-2xl font-semibold text-gray-900">Dashboard</h1>
+        <p class="mt-2 text-sm text-gray-700">Overview of your construction projects and expenses</p>
+    </div>
+    <div class="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
+        <div class="flex space-x-3">
+            <button type="button" class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                <i class="fas fa-download -ml-0.5 mr-2 h-4 w-4"></i>
+                Export
+            </button>
+            <a href="{% url 'projects:create' %}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                <i class="fas fa-plus -ml-1 mr-2 h-5 w-5"></i>
+                New Project
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- KPI Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-lg-3">
+        <div class="card stats-card h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="bg-primary bg-opacity-25 rounded-circle p-3">
+                            <i class="fas fa-project-diagram text-primary"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <div class="text-muted small">Total Projects</div>
+                        <div class="h4 fw-bold text-primary">{{ total_projects }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-sm-6 col-lg-3">
+        <div class="card stats-card h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="bg-success bg-opacity-25 rounded-circle p-3">
+                            <i class="fas fa-play text-success"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <div class="text-muted small">Active Projects</div>
+                        <div class="h4 fw-bold text-success">{{ active_projects }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-sm-6 col-lg-3">
+        <div class="card stats-card h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="bg-warning bg-opacity-25 rounded-circle p-3">
+                            <i class="fas fa-dollar-sign text-warning"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <div class="text-muted small">Total Budget</div>
+                        <div class="h4 fw-bold text-warning">${{ total_budget|floatformat:0 }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-sm-6 col-lg-3">
+        <div class="card stats-card h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="bg-{% if budget_variance >= 0 %}success{% else %}danger{% endif %} bg-opacity-25 rounded-circle p-3">
+                            <i class="fas fa-chart-line text-{% if budget_variance >= 0 %}success{% else %}danger{% endif %}"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <div class="text-muted small">Budget Variance</div>
+                        <div class="h4 fw-bold text-{% if budget_variance >= 0 %}success{% else %}danger{% endif %}">
+                            ${{ budget_variance|floatformat:0 }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Secondary KPIs -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-lg-3">
+        <div class="card bg-light">
+            <div class="card-body text-center">
+                <h5 class="card-title text-muted mb-1">Completed</h5>
+                <h3 class="text-success">{{ completed_projects }}</h3>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-sm-6 col-lg-3">
+        <div class="card bg-light">
+            <div class="card-body text-center">
+                <h5 class="card-title text-muted mb-1">Overdue</h5>
+                <h3 class="text-danger">{{ overdue_projects }}</h3>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-sm-6 col-lg-3">
+        <div class="card bg-light">
+            <div class="card-body text-center">
+                <h5 class="card-title text-muted mb-1">Total Expenses</h5>
+                <h3 class="text-info">${{ total_expenses|floatformat:0 }}</h3>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-sm-6 col-lg-3">
+        <div class="card bg-light">
+            <div class="card-body text-center">
+                <h5 class="card-title text-muted mb-1">Budget Usage</h5>
+                <h3 class="{% if budget_utilization > 90 %}text-danger{% elif budget_utilization > 75 %}text-warning{% else %}text-success{% endif %}">
+                    {{ budget_utilization }}%
+                </h3>
+                <div class="progress" style="height: 4px;">
+                    <div class="progress-bar {% if budget_utilization > 90 %}bg-danger{% elif budget_utilization > 75 %}bg-warning{% else %}bg-success{% endif %}" 
+                         style="width: {{ budget_utilization }}%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-line me-2"></i>Monthly Expense Trend
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="monthlyExpenseChart" height="80"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-pie me-2"></i>Projects by Status
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="projectStatusChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity Row -->
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-project-diagram me-2"></i>Recent Projects
+                </h5>
+                <a href="#" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Project</th>
+                                <th>Status</th>
+                                <th>Budget</th>
+                                <th>Progress</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for project in recent_projects %}
+                            <tr>
+                                <td>
+                                    <div class="fw-bold">{{ project.name }}</div>
+                                    <small class="text-muted">{{ project.location|default:"No location" }}</small>
+                                </td>
+                                <td>
+                                    <span class="badge 
+                                        {% if project.status == 'completed' %}bg-success
+                                        {% elif project.status == 'in_progress' %}bg-primary
+                                        {% elif project.status == 'on_hold' %}bg-warning
+                                        {% elif project.status == 'cancelled' %}bg-danger
+                                        {% else %}bg-secondary{% endif %}">
+                                        {{ project.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>${{ project.total_budget|floatformat:0 }}</td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="progress flex-grow-1 me-2" style="height: 6px;">
+                                            <div class="progress-bar" style="width: {{ project.progress_percentage }}%"></div>
+                                        </div>
+                                        <small>{{ project.progress_percentage }}%</small>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center py-4 text-muted">
+                                    <i class="fas fa-inbox fa-2x mb-2"></i><br>
+                                    No projects yet. <a href="#">Create your first project</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-receipt me-2"></i>Recent Expenses
+                </h5>
+                <a href="#" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Expense</th>
+                                <th>Project</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for expense in recent_expenses %}
+                            <tr>
+                                <td>
+                                    <div class="fw-bold">{{ expense.name }}</div>
+                                    <small class="text-muted">{{ expense.expense_date }}</small>
+                                </td>
+                                <td>{{ expense.project.name|truncatechars:20 }}</td>
+                                <td>
+                                    <div>${{ expense.actual_cost|floatformat:2 }}</div>
+                                    {% if expense.is_over_budget %}
+                                        <small class="text-danger">Over budget</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge 
+                                        {% if expense.status == 'paid' %}bg-success
+                                        {% elif expense.status == 'approved' %}bg-primary
+                                        {% elif expense.status == 'overdue' %}bg-danger
+                                        {% else %}bg-secondary{% endif %}">
+                                        {{ expense.get_status_display }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center py-4 text-muted">
+                                    <i class="fas fa-inbox fa-2x mb-2"></i><br>
+                                    No expenses yet. <a href="#">Add your first expense</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Monthly Expense Chart
+    const monthlyCtx = document.getElementById('monthlyExpenseChart').getContext('2d');
+    const monthlyData = {{ monthly_expenses|safe }};
+    
+    new Chart(monthlyCtx, {
+        type: 'line',
+        data: {
+            labels: monthlyData.map(item => item.month),
+            datasets: [{
+                label: 'Expenses ($)',
+                data: monthlyData.map(item => item.total),
+                borderColor: '#3498db',
+                backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                tension: 0.3,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + value.toLocaleString();
+                        }
+                    }
+                }
+            },
+            elements: {
+                point: {
+                    radius: 4,
+                    hoverRadius: 6
+                }
+            }
+        }
+    });
+    
+    // Project Status Chart
+    const statusCtx = document.getElementById('projectStatusChart').getContext('2d');
+    const statusData = {{ projects_by_status|safe }};
+    
+    const statusColors = {
+        'planning': '#6c757d',
+        'in_progress': '#007bff',
+        'on_hold': '#ffc107',
+        'completed': '#28a745',
+        'cancelled': '#dc3545'
+    };
+    
+    const statusLabels = {
+        'planning': 'Planning',
+        'in_progress': 'In Progress',
+        'on_hold': 'On Hold',
+        'completed': 'Completed',
+        'cancelled': 'Cancelled'
+    };
+    
+    if (statusData.length > 0) {
+        new Chart(statusCtx, {
+            type: 'doughnut',
+            data: {
+                labels: statusData.map(item => statusLabels[item.status] || item.status),
+                datasets: [{
+                    data: statusData.map(item => item.count),
+                    backgroundColor: statusData.map(item => statusColors[item.status] || '#6c757d'),
+                    borderWidth: 2,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 15,
+                            usePointStyle: true
+                        }
+                    }
+                }
+            }
+        });
+    } else {
+        statusCtx.canvas.parentElement.innerHTML = '<div class="text-center py-4 text-muted"><i class="fas fa-chart-pie fa-2x mb-2"></i><br>No project data available</div>';
+    }
+});
+</script>
+{% endblock %}

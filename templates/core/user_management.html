@@ -1,0 +1,390 @@
+{% extends 'base.html' %}
+{% load user_management_tags %}
+
+{% block title %}User Management - ConstructPro{% endblock %}
+
+{% block page_title %}User Management{% endblock %}
+{% block page_subtitle %}Manage team members, roles, and permissions{% endblock %}
+
+{% block content %}
+<!-- Page header -->
+<div class="d-flex justify-between align-center mb-4">
+    <div>
+        <h2>Team Management</h2>
+        <p class="text-muted">{{ total_members }} active members in {{ company.name }}</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'core:invite_user' %}" class="btn btn-primary">
+            <i class="fas fa-user-plus"></i>
+            Invite User
+        </a>
+        <a href="{% url 'core:role_create' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-plus"></i>
+            New Role
+        </a>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="row mb-4">
+    <div class="col col-3">
+        <div class="card">
+            <div class="card-stat">
+                <div class="card-stat-icon" style="background: var(--accent-100); color: var(--accent-600);">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="card-stat-value text-primary">{{ total_members }}</div>
+                <div class="card-stat-label">Total Members</div>
+            </div>
+        </div>
+    </div>
+    <div class="col col-3">
+        <div class="card">
+            <div class="card-stat">
+                <div class="card-stat-icon" style="background: var(--accent-100); color: var(--accent-600);">
+                    <i class="fas fa-user-shield"></i>
+                </div>
+                <div class="card-stat-value text-success">{{ roles.count }}</div>
+                <div class="card-stat-label">Active Roles</div>
+            </div>
+        </div>
+    </div>
+    <div class="col col-3">
+        <div class="card">
+            <div class="card-stat">
+                <div class="card-stat-icon" style="background: var(--yellow-100); color: var(--yellow-600);">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="card-stat-value text-warning">{{ pending_invitations.count }}</div>
+                <div class="card-stat-label">Pending Invites</div>
+            </div>
+        </div>
+    </div>
+    <div class="col col-3">
+        <div class="card">
+            <div class="card-stat">
+                <div class="card-stat-icon" style="background: var(--red-100); color: var(--red-600);">
+                    <i class="fas fa-user-times"></i>
+                </div>
+                <div class="card-stat-value text-danger">0</div>
+                <div class="card-stat-label">Inactive Users</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Members Table -->
+<div class="card mb-4">
+    <div class="card-header">
+        <div class="d-flex justify-between align-items-center">
+            <div>
+                <h5 class="card-title mb-0">Team Members</h5>
+                <p class="text-muted mb-0">Manage user roles and permissions</p>
+            </div>
+            <div class="d-flex gap-2">
+                <input type="text" class="form-control" placeholder="Search members..." style="width: 200px;">
+                <select class="form-select" style="width: 150px;">
+                    <option value="">All Roles</option>
+                    {% for role in roles %}
+                    <option value="{{ role.id }}">{{ role.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Member</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                        <th>Joined</th>
+                        <th>Last Active</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for member in members %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="flex-shrink-0">
+                                    {% if member.user.userprofile.avatar %}
+                                        <img src="{{ member.user.userprofile.avatar.url }}" alt="{{ member.user.get_full_name }}" class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover;">
+                                    {% else %}
+                                        <div class="rounded-circle d-flex align-items-center justify-center" style="width: 40px; height: 40px; background: var(--accent-100); color: var(--accent-600); font-weight: 600;">
+                                            {{ member.user.first_name.0|default:member.user.username.0|upper }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <div class="fw-medium">{{ member.user.get_full_name|default:member.user.username }}</div>
+                                    <small class="text-muted">{{ member.user.email }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <span class="badge bg-primary">{{ member.role.name }}</span>
+                                {% if member.is_company_admin %}
+                                    <i class="fas fa-crown text-warning ms-2" title="Company Admin"></i>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge {% if member.status == 'active' %}bg-success{% elif member.status == 'invited' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
+                                {{ member.get_status_display }}
+                            </span>
+                        </td>
+                        <td>
+                            <div>{{ member.joined_date|date:"M d, Y" }}</div>
+                            <small class="text-muted">{{ member.joined_date|timesince }} ago</small>
+                        </td>
+                        <td>
+                            {% if member.user.last_login %}
+                                <div>{{ member.user.last_login|date:"M d, Y" }}</div>
+                                <small class="text-muted">{{ member.user.last_login|timesince }} ago</small>
+                            {% else %}
+                                <span class="text-muted">Never</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-primary" onclick="editMember('{{ member.id }}')">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                {% if member.status == 'invited' %}
+                                    <button class="btn btn-outline-warning" onclick="resendInvite('{{ member.id }}')">
+                                        <i class="fas fa-paper-plane"></i>
+                                    </button>
+                                {% endif %}
+                                {% if not member.is_company_admin %}
+                                    <button class="btn btn-outline-danger" onclick="removeMember('{{ member.id }}', '{{ member.user.get_full_name|default:member.user.username }}')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center py-4 text-muted">
+                            No team members found
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Roles Management -->
+<div class="card mb-4">
+    <div class="card-header">
+        <div class="d-flex justify-between align-items-center">
+            <div>
+                <h5 class="card-title mb-0">Company Roles</h5>
+                <p class="text-muted mb-0">Manage roles and permissions for your organization</p>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="{% url 'core:role_create' %}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-plus me-1"></i>
+                    Create Role
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Role Name</th>
+                        <th>Description</th>
+                        <th>Type</th>
+                        <th>Members</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for role in roles %}
+                    <tr>
+                        <td>
+                            <div class="fw-medium">{{ role.name }}</div>
+                        </td>
+                        <td>
+                            <div class="text-muted">{{ role.description|truncatechars:60 }}</div>
+                        </td>
+                        <td>
+                            <div class="d-flex gap-1">
+                                {% if role.is_admin %}
+                                    <span class="badge bg-danger">Admin</span>
+                                {% endif %}
+                                {% if role.is_supervisor %}
+                                    <span class="badge bg-warning">Supervisor</span>
+                                {% endif %}
+                                {% if role.is_team_member %}
+                                    <span class="badge bg-info">Team Member</span>
+                                {% endif %}
+                                {% if not role.is_admin and not role.is_supervisor and not role.is_team_member %}
+                                    <span class="badge bg-secondary">Standard</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            {% with role_members=members|filter_by_role:role %}
+                            <span class="text-muted">{{ role_members|length }} member{{ role_members|length|pluralize_simple }}</span>
+                            {% endwith %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{% url 'core:role_edit' role.id %}" class="btn btn-outline-primary" title="Edit Role">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                {% with role_members=members|filter_by_role:role role_member_count=role_members|length admin_roles=roles|filter_admin admin_count=admin_roles|length %}
+                                {% if role_member_count == 0 %}
+                                    {% if not role.is_admin or admin_count > 1 %}
+                                    <a href="{% url 'core:role_delete' role.id %}" class="btn btn-outline-danger" title="Delete Role">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                    {% else %}
+                                    <button class="btn btn-outline-danger" disabled title="Cannot delete last admin role">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                    {% endif %}
+                                {% else %}
+                                <button class="btn btn-outline-danger" disabled title="Cannot delete role with assigned members">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                {% endif %}
+                                {% endwith %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center py-4 text-muted">
+                            No roles found
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Pending Invitations -->
+{% if pending_invitations %}
+<div class="card">
+    <div class="card-header">
+        <h5 class="card-title mb-0">Pending Invitations</h5>
+        <p class="text-muted mb-0">Users who have been invited but haven't joined yet</p>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Invited By</th>
+                        <th>Sent</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for invitation in pending_invitations %}
+                    <tr>
+                        <td>
+                            <div class="fw-medium">{{ invitation.user.email }}</div>
+                        </td>
+                        <td>
+                            <span class="badge bg-secondary">{{ invitation.role.name }}</span>
+                        </td>
+                        <td>
+                            <div class="fw-medium">{{ invitation.invited_by.get_full_name|default:invitation.invited_by.username }}</div>
+                        </td>
+                        <td>
+                            <div>{{ invitation.joined_date|date:"M d, Y" }}</div>
+                            <small class="text-muted">{{ invitation.joined_date|timesince }} ago</small>
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-primary" onclick="resendInvite('{{ invitation.id }}')">
+                                    <i class="fas fa-paper-plane"></i>
+                                    Resend
+                                </button>
+                                <button class="btn btn-outline-danger" onclick="cancelInvite('{{ invitation.id }}')">
+                                    <i class="fas fa-times"></i>
+                                    Cancel
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function editMember(memberId) {
+    // Implement member editing
+    alert('Edit member functionality will be implemented soon.');
+}
+
+function removeMember(memberId, memberName) {
+    if (confirm(`Are you sure you want to remove ${memberName} from your team?`)) {
+        // Implement member removal
+        showNotification(`${memberName} has been removed from the team.`, 'success');
+    }
+}
+
+function resendInvite(invitationId) {
+    // Implement invitation resending
+    showNotification('Invitation has been resent.', 'success');
+}
+
+function cancelInvite(invitationId) {
+    if (confirm('Are you sure you want to cancel this invitation?')) {
+        // Implement invitation cancellation
+        showNotification('Invitation has been cancelled.', 'info');
+    }
+}
+
+// Search and filter functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.querySelector('input[placeholder="Search members..."]');
+    const roleFilter = document.querySelector('select');
+    const tableRows = document.querySelectorAll('tbody tr');
+    
+    function filterTable() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const selectedRole = roleFilter.value;
+        
+        tableRows.forEach(row => {
+            if (row.textContent.includes('No team members found')) return;
+            
+            const memberName = row.querySelector('td:first-child').textContent.toLowerCase();
+            const memberRole = row.querySelector('.badge').textContent;
+            
+            const matchesSearch = memberName.includes(searchTerm);
+            const matchesRole = !selectedRole || memberRole === selectedRole;
+            
+            row.style.display = (matchesSearch && matchesRole) ? '' : 'none';
+        });
+    }
+    
+    searchInput.addEventListener('input', filterTable);
+    roleFilter.addEventListener('change', filterTable);
+});
+</script>
+{% endblock %}

@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+
+{% block title %}Server Error - Construction Tracker{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="text-center">
+                <div class="error mx-auto" data-text="500">500</div>
+                <p class="lead text-gray-800 mb-5">Internal Server Error</p>
+                <p class="text-gray-500 mb-0">Something went wrong on our end...</p>
+                <p class="text-gray-500 mb-4">
+                    We're experiencing some technical difficulties. Our team has been notified and is working to resolve the issue.
+                </p>
+                
+                <div class="mb-4">
+                    <p class="text-muted">
+                        <strong>Error Code:</strong> {{ error_code|default:"500001" }}
+                    </p>
+                    <p class="text-muted">
+                        <strong>Timestamp:</strong> {{ timestamp|default:"N/A" }}
+                    </p>
+                </div>
+
+                <div class="alert alert-info" role="alert">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>What can you do?</strong>
+                    <ul class="list-unstyled mb-0 mt-2">
+                        <li>• Wait a few minutes and try again</li>
+                        <li>• Check your internet connection</li>
+                        <li>• Contact support if the problem persists</li>
+                    </ul>
+                </div>
+
+                <div class="btn-group" role="group" aria-label="Navigation options">
+                    <a class="btn btn-primary" href="{% url 'dashboard:dashboard' %}">
+                        <i class="fas fa-home me-2"></i>Go to Dashboard
+                    </a>
+                    <a class="btn btn-secondary" href="javascript:location.reload()">
+                        <i class="fas fa-sync-alt me-2"></i>Try Again
+                    </a>
+                    <a class="btn btn-outline-secondary" href="mailto:support@constructiontracker.com">
+                        <i class="fas fa-envelope me-2"></i>Contact Support
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.error {
+    font-size: 7rem;
+    position: relative;
+    line-height: 1;
+    width: 12.5rem;
+    font-weight: 700;
+}
+
+.error:before {
+    content: attr(data-text);
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #dc3545 0%, #e74a3b 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: pulse 2s ease-in-out infinite alternate;
+}
+
+@keyframes pulse {
+    0% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+.text-gray-800 {
+    color: #5a5c69 !important;
+}
+
+.text-gray-500 {
+    color: #858796 !important;
+}
+</style>
+{% endblock %}

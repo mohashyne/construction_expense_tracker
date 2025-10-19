@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ title }} - {{ company.name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-shield-alt me-2"></i>{{ title }}
+                    </h4>
+                    <p class="mb-0 mt-1">{{ company.name }}</p>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                {{ form.name|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Role Type</label>
+                                    <div class="form-check">
+                                        {{ form.is_admin }}
+                                        <label class="form-check-label" for="{{ form.is_admin.id_for_label }}">
+                                            Administrator - Full system access
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        {{ form.is_supervisor }}
+                                        <label class="form-check-label" for="{{ form.is_supervisor.id_for_label }}">
+                                            Supervisor - Executive oversight access
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        {{ form.is_team_member }}
+                                        <label class="form-check-label" for="{{ form.is_team_member.id_for_label }}">
+                                            Team Member - Standard team access
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12">
+                                {{ form.description|as_crispy_field }}
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12">
+                                <label class="form-label">Permissions</label>
+                                <div class="border rounded p-3" style="max-height: 300px; overflow-y: auto;">
+                                    <div class="row">
+                                        {% for choice in form.permissions %}
+                                            <div class="col-md-6 mb-2">
+                                                <div class="form-check">
+                                                    {{ choice.tag }}
+                                                    <label class="form-check-label" for="{{ choice.id_for_label }}">
+                                                        {{ choice.choice_label }}
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                <small class="text-muted">Select the permissions this role should have access to</small>
+                            </div>
+                        </div>
+
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-2"></i>Save Role
+                                </button>
+                                <a href="{% url 'core:company_management' %}" class="btn btn-secondary ms-2">
+                                    <i class="fas fa-arrow-left me-2"></i>Back to Management
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Super Owner Dashboard - Construction Tracker{% endblock %}</title>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Component CSS -->
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/components.css' %}">
+    
+    <style>
+        :root {
+            /* Super Owner Theme Colors */
+            --admin-primary: #1e293b;
+            --admin-primary-light: #334155;
+            --admin-accent: #f59e0b;
+            --admin-accent-light: #fbbf24;
+            --admin-danger: #dc2626;
+            --admin-success: #059669;
+            --admin-warning: #d97706;
+            --admin-info: #0284c7;
+            
+            /* Standard colors */
+            --gray-900: #111827;
+            --gray-800: #1f2937;
+            --gray-700: #374151;
+            --gray-600: #4b5563;
+            --gray-500: #6b7280;
+            --gray-400: #9ca3af;
+            --gray-300: #d1d5db;
+            --gray-200: #e5e7eb;
+            --gray-100: #f3f4f6;
+            --gray-50: #f9fafb;
+            
+            /* Layout */
+            --sidebar-width: 280px;
+            --header-height: 70px;
+            
+            /* Typography */
+            --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            --font-display: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-primary);
+            font-size: 0.875rem;
+            line-height: 1.5;
+            color: var(--gray-700);
+            background-color: var(--gray-50);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .admin-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Super Owner Sidebar */
+        .admin-sidebar {
+            width: var(--sidebar-width);
+            background: var(--admin-primary);
+            color: white;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 4px 0 6px -1px rgb(0 0 0 / 0.1);
+        }
+
+        .admin-sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--admin-primary-light);
+            background: var(--admin-primary);
+        }
+
+        .admin-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .admin-brand-icon {
+            width: 2.5rem;
+            height: 2.5rem;
+            background: var(--admin-accent);
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            color: white;
+        }
+
+        .admin-brand-text {
+            font-family: var(--font-display);
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: white;
+        }
+
+        .admin-brand-subtitle {
+            font-size: 0.75rem;
+            color: var(--admin-accent-light);
+            font-weight: 500;
+        }
+
+        /* Super Owner Navigation */
+        .admin-nav {
+            padding: 1rem 0;
+        }
+
+        .admin-nav-section {
+            margin-bottom: 2rem;
+        }
+
+        .admin-nav-section-title {
+            padding: 0.5rem 1.5rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--admin-accent-light);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+        }
+
+        .admin-nav-item {
+            margin: 0.25rem 1rem;
+        }
+
+        .admin-nav-link {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            color: #cbd5e1;
+            text-decoration: none;
+            border-radius: 0.5rem;
+            transition: all 0.15s ease;
+            font-weight: 500;
+            position: relative;
+        }
+
+        .admin-nav-link:hover {
+            background: var(--admin-primary-light);
+            color: white;
+            transform: translateX(2px);
+        }
+
+        .admin-nav-link.active {
+            background: var(--admin-accent);
+            color: white;
+        }
+
+        .admin-nav-link.active::before {
+            content: '';
+            position: absolute;
+            left: -1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 3px;
+            height: 1.5rem;
+            background: var(--admin-accent-light);
+            border-radius: 2px;
+        }
+
+        .admin-nav-icon {
+            width: 1.25rem;
+            text-align: center;
+            font-size: 1rem;
+        }
+
+        .admin-nav-text {
+            font-size: 0.875rem;
+        }
+
+        .admin-nav-badge {
+            margin-left: auto;
+            background: var(--admin-danger);
+            color: white;
+            font-size: 0.7rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 1rem;
+            font-weight: 600;
+        }
+
+        /* Main Content Area */
+        .admin-main {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Super Owner Header */
+        .admin-header {
+            height: var(--header-height);
+            background: white;
+            border-bottom: 1px solid var(--gray-200);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+        }
+
+        .admin-header-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .admin-header-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            font-family: var(--font-display);
+        }
+
+        .admin-header-subtitle {
+            font-size: 0.875rem;
+            color: var(--gray-500);
+        }
+
+        .admin-header-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-left: auto;
+        }
+
+        .admin-header-action {
+            width: 2.5rem;
+            height: 2.5rem;
+            border: none;
+            background: var(--gray-100);
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--gray-600);
+            cursor: pointer;
+            transition: all 0.15s ease;
+            text-decoration: none;
+            position: relative;
+        }
+
+        .admin-header-action:hover {
+            background: var(--admin-accent);
+            color: white;
+        }
+
+        .admin-user-menu {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem 1rem;
+            background: var(--gray-100);
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .admin-user-menu:hover {
+            background: var(--admin-accent);
+            color: white;
+        }
+
+        .admin-user-avatar {
+            width: 2rem;
+            height: 2rem;
+            border-radius: 50%;
+            background: var(--admin-accent);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .admin-user-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .admin-user-name {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+
+        .admin-user-role {
+            font-size: 0.75rem;
+            color: var(--admin-accent);
+            font-weight: 500;
+        }
+
+        /* Content Area */
+        .admin-content {
+            flex: 1;
+            padding: 2rem;
+            max-width: 100%;
+            overflow-x: hidden;
+            word-wrap: break-word;
+        }
+        
+        /* Prevent horizontal overflow */
+        .admin-content * {
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+        
+        /* Table responsiveness */
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .table {
+            width: 100%;
+            max-width: 100%;
+            margin-bottom: 1rem;
+            background-color: transparent;
+        }
+        
+        .table th,
+        .table td {
+            padding: 0.75rem;
+            vertical-align: top;
+            border-top: 1px solid #dee2e6;
+            word-wrap: break-word;
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        /* Responsive table wrapper */
+        .admin-table-wrapper {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            max-width: 100%;
+        }
+        
+        .admin-table-wrapper .table {
+            min-width: 600px;
+            margin-bottom: 0;
+        }
+        
+        /* Mobile table improvements */
+        @media (max-width: 768px) {
+            .admin-table-wrapper .table {
+                min-width: 500px;
+                font-size: 0.8125rem;
+            }
+            
+            .table th,
+            .table td {
+                padding: 0.5rem;
+                max-width: 120px;
+            }
+        }
+
+        /* Notification Badge */
+        .notification-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: var(--admin-danger);
+            color: white;
+            border-radius: 50%;
+            font-size: 0.7rem;
+            font-weight: 600;
+            min-width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+            border: 2px solid white;
+        }
+
+        /* Card and content styles */
+        .card {
+            border: 1px solid var(--gray-200);
+            border-radius: 0.5rem;
+            background: white;
+            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+            overflow: hidden;
+            word-wrap: break-word;
+        }
+        
+        .card-header {
+            padding: 1rem 1.5rem;
+            background: var(--gray-50);
+            border-bottom: 1px solid var(--gray-200);
+        }
+        
+        .card-body {
+            padding: 1.5rem;
+        }
+        
+        .card-title {
+            margin: 0;
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+        
+        /* List groups */
+        .list-group {
+            display: flex;
+            flex-direction: column;
+            padding-left: 0;
+            margin-bottom: 0;
+        }
+        
+        .list-group-item {
+            position: relative;
+            display: block;
+            padding: 0.75rem 1.25rem;
+            margin-bottom: -1px;
+            background-color: #fff;
+            border: 1px solid rgba(0, 0, 0, 0.125);
+            word-wrap: break-word;
+        }
+        
+        .list-group-flush .list-group-item {
+            border-right: 0;
+            border-left: 0;
+            border-radius: 0;
+        }
+        
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: 0.25em 0.6em;
+            font-size: 0.75em;
+            font-weight: 700;
+            line-height: 1;
+            text-align: center;
+            white-space: nowrap;
+            vertical-align: baseline;
+            border-radius: 0.25rem;
+        }
+        
+        .badge-primary { background-color: var(--admin-accent); color: white; }
+        .badge-warning { background-color: var(--admin-warning); color: white; }
+        .badge-danger { background-color: var(--admin-danger); color: white; }
+        .badge-success { background-color: var(--admin-success); color: white; }
+        
+        /* Buttons */
+        .btn {
+            display: inline-block;
+            font-weight: 400;
+            text-align: center;
+            white-space: nowrap;
+            vertical-align: middle;
+            user-select: none;
+            border: 1px solid transparent;
+            padding: 0.375rem 0.75rem;
+            font-size: 0.875rem;
+            line-height: 1.5;
+            border-radius: 0.25rem;
+            transition: all 0.15s ease-in-out;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        
+        .btn-sm {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.8125rem;
+            line-height: 1.5;
+            border-radius: 0.2rem;
+        }
+        
+        .btn-outline-primary {
+            color: var(--admin-accent);
+            border-color: var(--admin-accent);
+        }
+        
+        .btn-outline-primary:hover {
+            color: white;
+            background-color: var(--admin-accent);
+            border-color: var(--admin-accent);
+        }
+        
+        .btn-outline-secondary {
+            color: var(--gray-600);
+            border-color: var(--gray-300);
+        }
+        
+        .btn-outline-secondary:hover {
+            color: white;
+            background-color: var(--gray-600);
+            border-color: var(--gray-600);
+        }
+        
+        /* Flex utilities */
+        .d-flex { display: flex; }
+        .justify-content-between { justify-content: space-between; }
+        .align-items-center { align-items: center; }
+        .align-items-start { align-items: flex-start; }
+        .flex-grow-1 { flex-grow: 1; }
+        
+        .text-center { text-align: center; }
+        .text-muted { color: var(--gray-500); }
+        .text-primary { color: var(--admin-accent); }
+        .text-info { color: var(--admin-info); }
+        .text-danger { color: var(--admin-danger); }
+        .text-secondary { color: var(--gray-600); }
+        
+        .mb-0 { margin-bottom: 0; }
+        .mb-1 { margin-bottom: 0.25rem; }
+        .mb-3 { margin-bottom: 1rem; }
+        .mb-4 { margin-bottom: 1.5rem; }
+        .mt-2 { margin-top: 0.5rem; }
+        .ml-2 { margin-left: 0.5rem; }
+        .ml-3 { margin-left: 1rem; }
+        .me-2 { margin-right: 0.5rem; }
+        
+        .py-5 { padding-top: 3rem; padding-bottom: 3rem; }
+        .p-0 { padding: 0; }
+        
+        /* Grid system */
+        .row {
+            display: flex;
+            flex-wrap: wrap;
+            margin-right: -0.75rem;
+            margin-left: -0.75rem;
+        }
+        
+        .col-12 {
+            flex: 0 0 100%;
+            max-width: 100%;
+            position: relative;
+            width: 100%;
+            padding-right: 0.75rem;
+            padding-left: 0.75rem;
+        }
+        
+        .col-md-3 {
+            flex: 0 0 25%;
+            max-width: 25%;
+            position: relative;
+            width: 100%;
+            padding-right: 0.75rem;
+            padding-left: 0.75rem;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .admin-sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+            
+            .admin-sidebar.open {
+                transform: translateX(0);
+            }
+            
+            .admin-main {
+                margin-left: 0;
+            }
+            
+            .admin-header {
+                padding: 0 1rem;
+            }
+            
+            .admin-content {
+                padding: 1rem;
+            }
+            
+            .col-md-3 {
+                flex: 0 0 100%;
+                max-width: 100%;
+            }
+            
+            .table th,
+            .table td {
+                max-width: 150px;
+                font-size: 0.875rem;
+            }
+            
+            .btn {
+                font-size: 0.8125rem;
+                padding: 0.25rem 0.5rem;
+            }
+            
+            .card-body {
+                padding: 1rem;
+            }
+            
+            .list-group-item {
+                padding: 0.5rem 1rem;
+            }
+        }
+
+        /* Status indicators */
+        .status-online { color: var(--admin-success); }
+        .status-warning { color: var(--admin-warning); }
+        .status-danger { color: var(--admin-danger); }
+        .status-info { color: var(--admin-info); }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Super Owner Sidebar -->
+        <aside class="admin-sidebar" id="admin-sidebar">
+            <div class="admin-sidebar-header">
+                <div class="admin-brand">
+                    <div class="admin-brand-icon">
+                        <i class="fas fa-crown"></i>
+                    </div>
+                    <div>
+                        <div class="admin-brand-text">Construction Tracker</div>
+                        <div class="admin-brand-subtitle">Super Owner Panel</div>
+                    </div>
+                </div>
+            </div>
+            
+            <nav class="admin-nav">
+                <!-- System Overview -->
+                <div class="admin-nav-section">
+                    <div class="admin-nav-section-title">System Overview</div>
+                    
+                    <div class="admin-nav-item">
+                        <a href="{% url 'core:super_owner_dashboard' %}" class="admin-nav-link {% if request.resolver_match.url_name == 'super_owner_dashboard' %}active{% endif %}">
+                            <i class="admin-nav-icon fas fa-tachometer-alt"></i>
+                            <span class="admin-nav-text">Dashboard</span>
+                        </a>
+                    </div>
+                    
+                    <div class="admin-nav-item">
+                        <a href="{% url 'core:super_owner_registrations' %}" class="admin-nav-link {% if 'registration' in request.resolver_match.url_name|default:'' %}active{% endif %}">
+                            <i class="admin-nav-icon fas fa-user-plus"></i>
+                            <span class="admin-nav-text">Registration Requests</span>
+                            {% if pending_requests_count > 0 %}
+                                <span class="admin-nav-badge">{{ pending_requests_count }}</span>
+                            {% endif %}
+                        </a>
+                    </div>
+                    
+                    <div class="admin-nav-item">
+                        <a href="/admin/" class="admin-nav-link" target="_blank">
+                            <i class="admin-nav-icon fas fa-cogs"></i>
+                            <span class="admin-nav-text">Django Admin</span>
+                            <i class="fas fa-external-link-alt" style="margin-left: auto; font-size: 0.75rem;"></i>
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Data Management -->
+                <div class="admin-nav-section">
+                    <div class="admin-nav-section-title">Data Management</div>
+                    
+                    <div class="admin-nav-item">
+                        <a href="{% url 'super_owner:backup_management' %}" class="admin-nav-link {% if 'backup' in request.resolver_match.url_name|default:'' %}active{% endif %}">
+                            <i class="admin-nav-icon fas fa-database"></i>
+                            <span class="admin-nav-text">Backup & Restore</span>
+                        </a>
+                    </div>
+                    
+                    <div class="admin-nav-item">
+                        <a href="{% url 'core:export_data' 'all' %}" class="admin-nav-link">
+                            <i class="admin-nav-icon fas fa-file-export"></i>
+                            <span class="admin-nav-text">Data Export</span>
+                        </a>
+                    </div>
+                    
+                    <div class="admin-nav-item">
+                        <a href="{% url 'super_owner:system_analytics' %}" class="admin-nav-link {% if request.resolver_match.url_name == 'system_analytics' %}active{% endif %}">
+                            <i class="admin-nav-icon fas fa-chart-line"></i>
+                            <span class="admin-nav-text">System Analytics</span>
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Entity Management -->
+                <div class="admin-nav-section">
+                    <div class="admin-nav-section-title">Entity Management</div>
+                    
+                    <div class="admin-nav-item">
+                        <a href="{% url 'super_owner:companies_list' %}" class="admin-nav-link {% if request.resolver_match.url_name == 'companies_list' %}active{% endif %}">
+                            <i class="admin-nav-icon fas fa-building"></i>
+                            <span class="admin-nav-text">Companies</span>
+                        </a>
+                    </div>
+                    
+                    <div class="admin-nav-item">
+                        <a href="{% url 'super_owner:users_list' %}" class="admin-nav-link {% if request.resolver_match.url_name == 'users_list' %}active{% endif %}">
+                            <i class="admin-nav-icon fas fa-users"></i>
+                            <span class="admin-nav-text">Users</span>
+                        </a>
+                    </div>
+                    
+                    <div class="admin-nav-item">
+                        <a href="{% url 'super_owner:manage_super_owners' %}" class="admin-nav-link {% if request.resolver_match.url_name == 'manage_super_owners' %}active{% endif %}">
+                            <i class="admin-nav-icon fas fa-crown"></i>
+                            <span class="admin-nav-text">Super Owners</span>
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- System Tools -->
+                <div class="admin-nav-section">
+                    <div class="admin-nav-section-title">System Tools</div>
+                    
+                    <div class="admin-nav-item">
+                        <a href="{% url 'super_owner:notifications' %}" class="admin-nav-link {% if request.resolver_match.url_name == 'notifications' %}active{% endif %}">
+                            <i class="admin-nav-icon fas fa-bell"></i>
+                            <span class="admin-nav-text">System Notifications</span>
+                        </a>
+                    </div>
+                    
+                    <div class="admin-nav-item">
+                        <a href="/admin/" class="admin-nav-link" target="_blank">
+                            <i class="admin-nav-icon fas fa-shield-alt"></i>
+                            <span class="admin-nav-text">Security & Logs</span>
+                        </a>
+                    </div>
+                    
+                    <div class="admin-nav-item">
+                        <a href="{% url 'super_owner:system_management' %}" class="admin-nav-link {% if request.resolver_match.url_name == 'system_management' %}active{% endif %}">
+                            <i class="admin-nav-icon fas fa-wrench"></i>
+                            <span class="admin-nav-text">System Maintenance</span>
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Account -->
+                <div class="admin-nav-section">
+                    <div class="admin-nav-section-title">Account</div>
+                    
+                    <div class="admin-nav-item">
+                        <a href="{% url 'core:super_owner_profile' %}" class="admin-nav-link {% if request.resolver_match.url_name == 'super_owner_profile' %}active{% endif %}">
+                            <i class="admin-nav-icon fas fa-user"></i>
+                            <span class="admin-nav-text">Profile</span>
+                        </a>
+                    </div>
+                    
+                    <div class="admin-nav-item">
+                        <a href="{% url 'core:logout' %}" class="admin-nav-link" style="color: #f87171;">
+                            <i class="admin-nav-icon fas fa-sign-out-alt"></i>
+                            <span class="admin-nav-text">Logout</span>
+                        </a>
+                    </div>
+                </div>
+            </nav>
+        </aside>
+        
+        <!-- Main Content Area -->
+        <div class="admin-main">
+            <!-- Header -->
+            <header class="admin-header">
+                <div class="admin-header-left">
+                    <button class="mobile-menu-toggle" id="mobile-menu-toggle" style="display: none;">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    
+                    <div>
+                        <div class="admin-header-title">{% block page_title %}Super Owner Dashboard{% endblock %}</div>
+                        <div class="admin-header-subtitle">{% block page_subtitle %}System Administration{% endblock %}</div>
+                    </div>
+                </div>
+                
+                <div class="admin-header-right">
+                    <a href="#" class="admin-header-action" title="System Status">
+                        <i class="fas fa-heartbeat status-online"></i>
+                    </a>
+                    
+                    <a href="{% url 'super_owner:notifications' %}" class="admin-header-action" title="Notifications">
+                        <i class="fas fa-bell"></i>
+                        {% if unread_notification_count > 0 %}
+                            <span class="notification-badge">{{ unread_notification_count }}</span>
+                        {% endif %}
+                    </a>
+                    
+                    <button class="admin-header-action" title="Quick Actions">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                    
+                    <div class="admin-user-menu">
+                        <div class="admin-user-avatar">
+                            {{ user.first_name.0|default:user.username.0|upper }}
+                        </div>
+                        <div class="admin-user-info">
+                            <div class="admin-user-name">{{ user.get_full_name|default:user.username }}</div>
+                            <div class="admin-user-role">Super Owner</div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            
+            <!-- Content -->
+            <main class="admin-content">
+                {% block main_content %}{% endblock %}
+            </main>
+        </div>
+    </div>
+
+    <script>
+        // Mobile menu toggle
+        document.getElementById('mobile-menu-toggle')?.addEventListener('click', function() {
+            document.getElementById('admin-sidebar').classList.toggle('open');
+        });
+        
+        // Auto-hide mobile menu on large screens
+        window.addEventListener('resize', function() {
+            if (window.innerWidth > 768) {
+                document.getElementById('admin-sidebar').classList.remove('open');
+            }
+        });
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

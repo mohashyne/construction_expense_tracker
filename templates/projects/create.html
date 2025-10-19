@@ -1,0 +1,187 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Create Project - Construction Expense Tracker{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-plus me-2"></i>Create New Project
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{% url 'projects:list' %}" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-arrow-left me-1"></i>Back to Projects
+        </a>
+    </div>
+</div>
+
+<div class="row justify-content-between">
+    <div class="col-lg-9 col-xl-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Project Information</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-8">
+                            <label for="id_name" class="form-label">Project Name <span class="text-danger">*</span></label>
+                            {{ form.name }}
+                            {% if form.name.errors %}
+                                <div class="text-danger small">{{ form.name.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4">
+                            <label for="id_status" class="form-label">Status</label>
+                            {{ form.status }}
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3 justify-content-between">
+                        <div class="col-md-5">
+                            <label for="id_location" class="form-label">Location</label>
+                            {{ form.location }}
+                        </div>
+                        <div class="col-md-5">
+                            <label for="id_priority" class="form-label">Priority</label>
+                            {{ form.priority }}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="id_description" class="form-label">Description</label>
+                        {{ form.description }}
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <label for="id_start_date" class="form-label">Start Date</label>
+                            {{ form.start_date }}
+                        </div>
+                        <div class="col-md-4">
+                            <label for="id_expected_completion_date" class="form-label">Expected Completion</label>
+                            {{ form.expected_completion_date }}
+                        </div>
+                        <div class="col-md-4">
+                            <label for="id_end_date" class="form-label">End Date</label>
+                            {{ form.end_date }}
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3 justify-content-between">
+                        <div class="col-md-5">
+                            <label for="id_total_budget" class="form-label">Total Budget (₦)</label>
+                            {{ form.total_budget }}
+                        </div>
+                        <div class="col-md-5">
+                            <label for="id_progress_percentage" class="form-label">Progress (%)</label>
+                            {{ form.progress_percentage }}
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <h6 class="mb-3">Client Information</h6>
+                    <div class="row g-3 mb-3 justify-content-between">
+                        <div class="col-md-5">
+                            <label for="id_client_name" class="form-label">Client Name</label>
+                            {{ form.client_name }}
+                        </div>
+                        <div class="col-md-5">
+                            <label for="id_client_email" class="form-label">Client Email</label>
+                            {{ form.client_email }}
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3 justify-content-between">
+                        <div class="col-md-5">
+                            <label for="id_client_phone" class="form-label">Client Phone</label>
+                            {{ form.client_phone }}
+                        </div>
+                        <div class="col-md-5">
+                            <label for="id_image" class="form-label">Project Image</label>
+                            {{ form.image }}
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Create Project
+                        </button>
+                        <a href="{% url 'projects:list' %}" class="btn btn-secondary">
+                            <i class="fas fa-times me-2"></i>Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-xl-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="card-title mb-0"><i class="fas fa-info-circle me-2"></i>Tips</h6>
+            </div>
+            <div class="card-body">
+                <div class="small">
+                    <p><strong>Project Name:</strong> Use a descriptive name that identifies the project clearly.</p>
+                    
+                    <p><strong>Budget:</strong> Set a realistic total budget. You can track expenses against this amount.</p>
+                    
+                    <p><strong>Dates:</strong> Expected completion date helps with deadline tracking and overdue alerts.</p>
+                    
+                    <p><strong>Priority:</strong> High and urgent priority projects are highlighted in the dashboard.</p>
+                    
+                    <p><strong>Client Info:</strong> Adding client information helps with project organization and communication.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="card-title mb-0"><i class="fas fa-clock me-2"></i>Next Steps</h6>
+            </div>
+            <div class="card-body">
+                <div class="small">
+                    <p>After creating your project, you can:</p>
+                    <ul class="mb-0">
+                        <li>Add contractors to the project</li>
+                        <li>Start tracking expenses</li>
+                        <li>Upload project documents</li>
+                        <li>Monitor progress and budget</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-calculate end date based on expected completion
+    const expectedDate = document.getElementById('id_expected_completion_date');
+    const endDate = document.getElementById('id_end_date');
+    
+    if (expectedDate && endDate) {
+        expectedDate.addEventListener('change', function() {
+            if (this.value && !endDate.value) {
+                endDate.value = this.value;
+            }
+        });
+    }
+    
+    // Progress percentage validation
+    const progressInput = document.getElementById('id_progress_percentage');
+    if (progressInput) {
+        progressInput.addEventListener('input', function() {
+            if (this.value < 0) this.value = 0;
+            if (this.value > 100) this.value = 100;
+        });
+    }
+});
+</script>
+{% endblock %}

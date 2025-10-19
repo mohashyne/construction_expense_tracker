@@ -1,0 +1,364 @@
+{% extends 'base.html' %}
+
+{% block title %}Welcome - Construction Expense Tracker{% endblock %}
+
+{% block main_content %}
+<div class="container-fluid px-0">
+    <!-- Hero Section -->
+    <div class="hero-section bg-white text-dark py-5">
+        <div class="container">
+            <div class="hero-container">
+                <div class="row align-items-center min-vh-75">
+                    <div class="col-lg-6 hero-content">
+                        <h1 class="display-4 fw-bold mb-4 fade-in-up">
+                            <i class="fas fa-hard-hat me-3 pulse-icon"></i>
+                            Construction Expense Tracker
+                        </h1>
+                        <p class="lead mb-4 fade-in-up delay-1">
+                            Manage multiple construction projects and track expenses effectively with our intuitive dashboard, 
+                            project management tools, and visual performance summaries.
+                        </p>
+                        <div class="d-flex gap-3 fade-in-up delay-2">
+                            <a href="{% url 'core:login' %}" class="btn btn-primary btn-lg hero-btn">
+                                <i class="fas fa-sign-in-alt me-2"></i>Sign In
+                            </a>
+                            <a href="{% url 'core:register' %}" class="btn btn-outline-primary btn-lg hero-btn">
+                                <i class="fas fa-user-plus me-2"></i>Register
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-lg-6 hero-visual">
+                        <div class="text-center floating-icon">
+                            <i class="fas fa-chart-line hero-chart-icon"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Features Section -->
+    <div id="features" class="py-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-12 text-center mb-5">
+                    <h2 class="fw-bold">Key Features</h2>
+                    <p class="text-muted">Everything you need to manage construction projects and expenses</p>
+                </div>
+            </div>
+            
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="card h-100 text-center border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <div class="feature-icon mb-3">
+                                <i class="fas fa-tachometer-alt text-primary" style="font-size: 3rem;"></i>
+                            </div>
+                            <h5 class="fw-bold">Interactive Dashboard</h5>
+                            <p class="text-muted">
+                                Visual KPIs, charts, and project selectors to monitor your construction projects at a glance.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="card h-100 text-center border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <div class="feature-icon mb-3">
+                                <i class="fas fa-project-diagram text-success" style="font-size: 3rem;"></i>
+                            </div>
+                            <h5 class="fw-bold">Project Management</h5>
+                            <p class="text-muted">
+                                Comprehensive project tracking with timelines, budgets, and progress monitoring.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="card h-100 text-center border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <div class="feature-icon mb-3">
+                                <i class="fas fa-receipt text-warning" style="font-size: 3rem;"></i>
+                            </div>
+                            <h5 class="fw-bold">Expense Tracking</h5>
+                            <p class="text-muted">
+                                Track planned vs actual costs with detailed categorization and receipt management.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="card h-100 text-center border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <div class="feature-icon mb-3">
+                                <i class="fas fa-users text-info" style="font-size: 3rem;"></i>
+                            </div>
+                            <h5 class="fw-bold">Contractor Management</h5>
+                            <p class="text-muted">
+                                Manage contractor information, ratings, and project assignments in one place.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="card h-100 text-center border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <div class="feature-icon mb-3">
+                                <i class="fas fa-calendar-alt text-danger" style="font-size: 3rem;"></i>
+                            </div>
+                            <h5 class="fw-bold">Quarterly Reports</h5>
+                            <p class="text-muted">
+                                Cumulative progress tracking and quarterly summaries for better financial planning.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="card h-100 text-center border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <div class="feature-icon mb-3">
+                                <i class="fas fa-mobile-alt text-secondary" style="font-size: 3rem;"></i>
+                            </div>
+                            <h5 class="fw-bold">Mobile Ready</h5>
+                            <p class="text-muted">
+                                Fully responsive design works perfectly on all devices, from desktop to mobile.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CTA Section -->
+    <div class="bg-light py-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8 mx-auto text-center">
+                    <h3 class="fw-bold mb-3">Ready to Get Started?</h3>
+                    <p class="text-muted mb-4">
+                        Join thousands of construction professionals who trust our platform to manage their projects and expenses.
+                    </p>
+                    <a href="{% url 'core:register' %}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-rocket me-2"></i>Start Tracking Now
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.hero-section {
+    background: linear-gradient(135deg, var(--gray-50) 0%, var(--primary-100) 100%);
+    min-height: 50vh;
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at 20% 80%, var(--accent-200) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, var(--primary-300) 0%, transparent 50%);
+    opacity: 0.4;
+    pointer-events: none;
+}
+
+.hero-container {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 
+        0 20px 40px rgba(0, 0, 0, 0.1),
+        0 4px 8px rgba(0, 0, 0, 0.05),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    border: 2px solid var(--accent-200);
+    padding: 3rem 2rem;
+    margin: 2rem auto;
+    position: relative;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+    animation: heroContainerPulse 4s ease-in-out infinite;
+}
+
+.hero-container::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(45deg, var(--accent-600), var(--primary-600), var(--accent-500), var(--accent-600));
+    border-radius: 22px;
+    z-index: -1;
+    animation: borderGlow 3s linear infinite;
+    opacity: 0.7;
+}
+
+.hero-container:hover {
+    transform: translateY(-5px);
+    box-shadow: 
+        0 30px 60px rgba(0, 0, 0, 0.15),
+        0 8px 16px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.min-vh-75 {
+    min-height: 50vh;
+}
+
+/* Animation Keyframes */
+@keyframes borderGlow {
+    0%, 100% {
+        background: linear-gradient(45deg, var(--accent-600), var(--primary-600), var(--accent-500), var(--accent-600));
+    }
+    25% {
+        background: linear-gradient(45deg, var(--primary-600), var(--accent-500), var(--accent-600), var(--primary-600));
+    }
+    50% {
+        background: linear-gradient(45deg, var(--accent-500), var(--accent-600), var(--primary-600), var(--accent-500));
+    }
+    75% {
+        background: linear-gradient(45deg, var(--accent-600), var(--primary-600), var(--accent-500), var(--accent-600));
+    }
+}
+
+@keyframes heroContainerPulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.02);
+    }
+}
+
+@keyframes fadeInUp {
+    0% {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pulseIcon {
+    0%, 100% {
+        transform: scale(1);
+        color: var(--accent-600);
+    }
+    50% {
+        transform: scale(1.1);
+        color: var(--primary-600);
+    }
+}
+
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-20px);
+    }
+}
+
+/* Element Animations */
+.fade-in-up {
+    animation: fadeInUp 0.8s ease-out forwards;
+    opacity: 0;
+}
+
+.delay-1 {
+    animation-delay: 0.2s;
+}
+
+.delay-2 {
+    animation-delay: 0.4s;
+}
+
+.pulse-icon {
+    animation: pulseIcon 2s ease-in-out infinite;
+    display: inline-block;
+}
+
+.floating-icon {
+    animation: float 3s ease-in-out infinite;
+}
+
+.hero-chart-icon {
+    font-size: 12rem;
+    background: linear-gradient(45deg, var(--accent-600), var(--primary-600), var(--accent-500));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    opacity: 0.7;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
+}
+
+.hero-btn {
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+}
+
+.hero-btn:hover::before {
+    left: 100%;
+}
+
+.hero-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px var(--accent-200);
+}
+
+/* Feature section styling */
+.feature-icon {
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    transition: transform 0.3s ease;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .hero-container {
+        padding: 2rem 1rem;
+        margin: 1rem;
+    }
+    
+    .hero-chart-icon {
+        font-size: 8rem;
+    }
+    
+    .hero-container::before {
+        display: none; /* Disable animated border on mobile for performance */
+    }
+}
+</style>
+{% endblock %}
