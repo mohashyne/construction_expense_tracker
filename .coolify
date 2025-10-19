@@ -1,0 +1,65 @@
+{
+  "name": "construction-expense-tracker",
+  "description": "Construction Expense Tracker - Multi-tenant project management application",
+  "type": "docker-compose",
+  "docker_compose_file": "docker-compose.coolify.yml",
+  "environment_variables": {
+    "SECRET_KEY": {
+      "required": true,
+      "description": "Django secret key (generate a new one for production)"
+    },
+    "DEBUG": {
+      "required": false,
+      "default": "False",
+      "description": "Debug mode (should be False in production)"
+    },
+    "DATABASE_URL": {
+      "required": true,
+      "description": "PostgreSQL database URL (will be auto-generated if using Coolify PostgreSQL)"
+    },
+    "POSTGRES_PASSWORD": {
+      "required": true,
+      "description": "PostgreSQL password"
+    },
+    "ALLOWED_HOSTS": {
+      "required": true,
+      "description": "Comma-separated list of allowed hosts (e.g., yourdomain.com,www.yourdomain.com)"
+    },
+    "CORS_ALLOWED_ORIGINS": {
+      "required": true,
+      "description": "Comma-separated list of allowed CORS origins (e.g., https://yourdomain.com)"
+    },
+    "SITE_URL": {
+      "required": true,
+      "description": "Full site URL (e.g., https://yourdomain.com)"
+    },
+    "EMAIL_HOST_USER": {
+      "required": false,
+      "description": "SMTP email username"
+    },
+    "EMAIL_HOST_PASSWORD": {
+      "required": false,
+      "description": "SMTP email password"
+    },
+    "DEFAULT_FROM_EMAIL": {
+      "required": false,
+      "description": "Default from email address"
+    },
+    "ADMIN_EMAILS": {
+      "required": false,
+      "description": "Comma-separated list of admin email addresses"
+    }
+  },
+  "ports": {
+    "8000": "Main application port"
+  },
+  "volumes": [
+    "static_volume:/app/staticfiles",
+    "media_volume:/app/media",
+    "postgres_data:/var/lib/postgresql/data",
+    "redis_data:/data"
+  ],
+  "health_check": "/health/",
+  "build_command": "docker-compose -f docker-compose.coolify.yml build",
+  "start_command": "docker-compose -f docker-compose.coolify.yml up -d"
+}
