@@ -3925,3 +3925,9 @@ WARNING 2025-10-19 17:37:01,926 log 64269 123145671176192 Not Found: /billing/ch
 WARNING 2025-10-19 17:37:01,928 basehttp 64269 123145620807680 "GET /billing/choose-plan/https://www.webmobilefirst.com/en/contact/?source=report-bug&url=http://127.0.0.1:8000/login/?next=/profile/&client_id=905914f4-01cf-459c-bdc5-5810665fca6b HTTP/1.1" 404 18036
 WARNING 2025-10-19 17:37:01,928 basehttp 64269 123145671176192 "GET /billing/choose-plan/https://www.webmobilefirst.com/en/support/?client_id=905914f4-01cf-459c-bdc5-5810665fca6b HTTP/1.1" 404 17962
 INFO 2025-10-19 20:01:15,131 autoreload 20543 140704704337664 Watching for file changes with StatReloader
+INFO 2025-10-19 20:43:08,493 autoreload 20543 140704704337664 /Users/muhammadibnsalyhu/Desktop/construction_expense_tracker/construction_tracker/settings.py changed, reloading.
+INFO 2025-10-19 20:43:10,111 autoreload 65055 140704704337664 Watching for file changes with StatReloader
+INFO 2025-10-19 20:43:16,971 autoreload 65055 140704704337664 /Users/muhammadibnsalyhu/Desktop/construction_expense_tracker/construction_tracker/settings.py changed, reloading.
+INFO 2025-10-19 20:43:17,706 autoreload 65444 140704704337664 Watching for file changes with StatReloader
+INFO 2025-10-19 20:43:40,590 autoreload 65444 140704704337664 /Users/muhammadibnsalyhu/Desktop/construction_expense_tracker/construction_tracker/urls.py changed, reloading.
+INFO 2025-10-19 20:43:41,332 autoreload 65785 140704704337664 Watching for file changes with StatReloader

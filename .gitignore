@@ -1,0 +1,69 @@
+# Django specific
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.log
+.git
+.mypy_cache
+.pytest_cache
+.hypothesis
+
+# Environment files (NEVER commit these)
+.env
+.env.*
+!.env.example
+
+# Database
+db.sqlite3
+*.db
+
+# Static files
+/staticfiles/
+/media/
+
+# Local development files
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Production files
+/logs/
+*.log
+*.pid
+
+# SSL certificates
+*.pem
+*.key
+*.crt
+
+# Backup files
+*.bak
+*.backup
+*.sql
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+
+# Node.js (if using frontend build tools)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
